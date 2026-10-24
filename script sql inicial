@@ -1,0 +1,107 @@
+-- 1. ENUM TYPES (Tipos enumerados para garantizar consistencia en los datos)
+CREATE TYPE pharmaceutical_form_enum AS ENUM (
+  'tablet_pill',          -- tableta o comprimido
+  'capsule',              -- cápsula
+  'syrup_suspension',     -- jarabe o suspensión
+  'injectable_ampoule',   -- ampolla inyectable
+  'cream_ointment',       -- crema o pomada
+  'drops',                -- gotas
+  'inhaler',              -- inhalador
+  'other'                 -- otro
+);
+
+CREATE TYPE batch_status_enum AS ENUM (
+  'available',            -- disponible
+  'expiring_soon',        -- próximo a vencer
+  'expired',              -- caducado
+  'out_of_stock',         -- agotado
+  'quarantine'            -- en cuarentena / revisión
+);
+
+CREATE TYPE movement_type_enum AS ENUM (
+  'donation_entry',       -- entrada por donación
+  'donation_exit',        -- salida por donación
+  'inventory_adjustment', -- ajuste de inventario
+  'expired_discard'       -- descarte por caducado
+);
+
+-- 2. LOCATIONS TABLE (Tabla de ubicaciones dentro del almacén central)
+CREATE TABLE locations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  zone TEXT NOT NULL,                   -- Zona (ej. "Pasillo A", "Refrigeración")
+  shelf_unit TEXT NOT NULL,             -- Estante o mueble (ej. "Estante 3", "Nevera 1")
+  tier_bin TEXT NOT NULL,               -- Nivel o casillero (ej. "Nivel 2", "Caja B")
+  location_code TEXT UNIQUE NOT NULL,   -- Código único de ubicación (ej. "PAS-A-SH3-T2")
+  description TEXT,                     -- Descripción adicional
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. MEDICATIONS MASTER CATALOG (Catálogo maestro de medicamentos / información general)
+CREATE TABLE medications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trade_name TEXT NOT NULL,             -- Nombre comercial
+  active_ingredient TEXT NOT NULL,      -- Principio activo (crucial para búsquedas médicas)
+  concentration TEXT NOT NULL,          -- Concentración (ej. "500 mg", "10 mg/5 ml")
+  pharmaceutical_form pharmaceutical_form_enum NOT NULL DEFAULT 'tablet_pill', -- Forma farmacéutica
+  requires_refrigeration BOOLEAN DEFAULT FALSE, -- Requiere cadena de frío
+  requires_prescription BOOLEAN DEFAULT FALSE,  -- Requiere receta médica
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. DONORS (Tabla de donantes / información de la fuente de los medicamentos)
+CREATE TABLE donors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name_or_company TEXT NOT NULL,        -- Nombre o razón social
+  contact_phone TEXT,                   -- Teléfono de contacto
+  contact_email TEXT,                   -- Correo electrónico
+  donor_type TEXT DEFAULT 'individual', -- Tipo ('individual', 'pharmacy', 'ngo', 'laboratory')
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. INVENTORY BATCHES (Lotes de inventario: aquí vive el stock real con caducidad y ubicación)
+CREATE TABLE batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  medication_id UUID NOT NULL REFERENCES medications(id) ON DELETE RESTRICT, -- ID del medicamento
+  donor_id UUID REFERENCES donors(id) ON DELETE SET NULL,                   -- ID del donante
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE RESTRICT,    -- ID de la ubicación en el almacén
+  batch_number TEXT NOT NULL,           -- Número de lote del fabricante
+  expiration_date DATE NOT NULL,        -- Fecha de caducidad
+  initial_quantity INT NOT NULL CHECK (initial_quantity > 0), -- Cantidad inicial recibida
+  current_quantity INT NOT NULL CHECK (current_quantity >= 0), -- Cantidad actual disponible
+  status batch_status_enum DEFAULT 'available', -- Estado actual del lote
+  observations TEXT,                    -- Observaciones sobre el estado del lote
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. MOVEMENTS HISTORY (Historial de movimientos: entradas, salidas y trazabilidad)
+CREATE TABLE movements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  batch_id UUID NOT NULL REFERENCES batches(id) ON DELETE RESTRICT, -- ID del lote afectado
+  type movement_type_enum NOT NULL,     -- Tipo de movimiento (entrada, salida, ajuste, descarte)
+  quantity INT NOT NULL CHECK (quantity > 0), -- Cantidad que entra o sale
+  destination_or_beneficiary TEXT,      -- Destino o beneficiario (ej. "Paciente Juan Pérez" o "Jornada Médica")
+  registered_by UUID REFERENCES auth.users(id), -- Usuario de Supabase que registró la acción
+  motive_or_observation TEXT,           -- Motivo u observación del movimiento
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. USEFUL VIEW FOR ALERTS AND FEFO RULE (Vista útil para alertas y regla FEFO)
+-- Consulta rápida de medicamentos disponibles ordenados por caducidad más cercana (First Expired, First Out)
+CREATE VIEW view_inventory_fefo AS
+SELECT 
+  b.id AS batch_id,
+  m.trade_name,
+  m.active_ingredient,
+  m.concentration,
+  b.batch_number,
+  b.expiration_date,
+  (b.expiration_date - CURRENT_DATE) AS days_until_expiration, -- Días restantes para vencer
+  b.current_quantity,
+  l.location_code,
+  l.zone,
+  m.requires_refrigeration
+FROM batches b
+JOIN medications m ON b.medication_id = m.id
+JOIN locations l ON b.location_id = l.id
+WHERE b.current_quantity > 0
+ORDER BY b.expiration_date ASC;
