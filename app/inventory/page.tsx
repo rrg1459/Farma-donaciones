@@ -4,37 +4,37 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Header } from '../components/Header';
+import type { BatchStatus } from '../../types/inventory';
+import { mockBatches, mockFEFOItems, mockLocations } from '../../lib/mockInventory';
 
-// Tipos tipados para el inventario completo
-interface InventoryItem {
-  id: string;
-  trade_name: string;
-  active_ingredient: string;
-  batch_number: string;
-  location_code: string;
-  zone: string;
-  expiration_date: string;
-  current_quantity: number;
-  unit: string;
-}
-
-// Datos de prueba completos tipados
-const mockInventory: InventoryItem[] = [
-  { id: 'i-1', trade_name: 'Amoxicilina 500mg', active_ingredient: 'Amoxicilina', batch_number: 'LOT-2024-089', location_code: 'PAS-A-SH2-T1', zone: 'Pasillo A', expiration_date: '2026-11-10', current_quantity: 45, unit: 'caps' },
-  { id: 'i-2', trade_name: 'Insulina NPH 100 UI', active_ingredient: 'Insulina Humana', batch_number: 'INS-7741-X', location_code: 'REF-1-T2', zone: 'Refrigeración', expiration_date: '2026-11-24', current_quantity: 12, unit: 'frascos' },
-  { id: 'i-3', trade_name: 'Paracetamol 500mg', active_ingredient: 'Acetaminofén', batch_number: 'PAR-9902-A', location_code: 'PAS-B-SH1-T3', zone: 'Pasillo B', expiration_date: '2027-01-16', current_quantity: 300, unit: 'tabs' },
-  { id: 'i-4', trade_name: 'Losartán Potásico 50mg', active_ingredient: 'Losartán', batch_number: 'LOS-3312-C', location_code: 'PAS-A-SH1-T2', zone: 'Pasillo A', expiration_date: '2027-03-15', current_quantity: 150, unit: 'tabs' },
-  { id: 'i-5', trade_name: 'Salbutamol Inhalador', active_ingredient: 'Salbutamol 100mcg', batch_number: 'SAL-8810-D', location_code: 'PAS-C-SH4-T1', zone: 'Pasillo C', expiration_date: '2027-08-20', current_quantity: 28, unit: 'frascos' },
-];
+const statusLabels: Record<BatchStatus, string> = {
+  available: 'Disponible',
+  expiring_soon: 'Próximo a vencer',
+  expired: 'Caducado',
+  out_of_stock: 'Agotado',
+  quarantine: 'En cuarentena',
+};
 
 export default function InventarioPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
 
-  // Lógica de filtrado dinámico
+  const mockInventory = mockFEFOItems.map((item) => {
+    const batch = mockBatches.find((candidate) => candidate.id === item.batch_id);
+    if (!batch) {
+      throw new Error(`FEFO batch ${item.batch_id} is missing from mock batches.`);
+    }
+
+    return { ...item, id: item.batch_id, status: batch.status };
+  });
+
   const filteredInventory = mockInventory.filter((item) =>
-    item.trade_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.active_ingredient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.batch_number.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.trade_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.active_ingredient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.batch_number.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (!selectedLocation || item.location_code === selectedLocation) &&
+    (!selectedStatus || item.status === selectedStatus)
   );
 
   return (
@@ -57,16 +57,31 @@ export default function InventarioPage() {
             />
           </div>
           <div className="flex items-center space-x-2">
-            <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option>Todas las Ubicaciones</option>
-              <option>Pasillo A</option>
-              <option>Pasillo B</option>
-              <option>Refrigerador 1</option>
+            <select
+              aria-label="Filtrar por ubicación"
+              value={selectedLocation}
+              onChange={(event) => setSelectedLocation(event.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Todas las Ubicaciones</option>
+              {mockLocations.map((location) => (
+                <option key={location.id} value={location.location_code}>
+                  {location.location_code}
+                </option>
+              ))}
             </select>
-            <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option>Todos los estados</option>
-              <option>Disponibles</option>
-              <option>Próximos a vencer</option>
+            <select
+              aria-label="Filtrar por estado"
+              value={selectedStatus}
+              onChange={(event) => setSelectedStatus(event.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Todos los estados</option>
+              {Object.entries(statusLabels).map(([status, label]) => (
+                <option key={status} value={status}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
         </section>
@@ -85,6 +100,7 @@ export default function InventarioPage() {
                 <th className="px-6 py-3">Ubicación</th>
                 <th className="px-6 py-3">Vencimiento</th>
                 <th className="px-6 py-3">Stock Disponible</th>
+                <th className="px-6 py-3">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -97,7 +113,9 @@ export default function InventarioPage() {
 
                 return (
                   <tr key={item.id} className="hover:bg-slate-50 transition">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{item.trade_name}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      {item.trade_name} {item.concentration}
+                    </td>
                     <td className="px-6 py-4">{item.active_ingredient}</td>
                     <td className="px-6 py-4 font-mono text-xs">{item.batch_number}</td>
                     <td className="px-6 py-4">
@@ -106,7 +124,10 @@ export default function InventarioPage() {
                       </span>
                     </td>
                     <td className={`px-6 py-4 font-semibold ${item.zone === 'Refrigeración' ? 'text-blue-600' : 'text-amber-600'}`}>{item.expiration_date}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} {item.unit}</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} unidades</td>
+                    <td className="px-6 py-4">
+                      {item.status ? statusLabels[item.status] : 'Sin estado'}
+                    </td>
                   </tr>
                 );
               })}

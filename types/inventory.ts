@@ -44,6 +44,40 @@ export interface Medication {
   created_at: string;
 }
 
+export interface Donor {
+  id: string;
+  name_or_company: string;
+  contact_phone: string | null;
+  contact_email: string | null;
+  donor_type: string;
+  created_at: string;
+}
+
+export interface Batch {
+  id: string;
+  medication_id: string;
+  donor_id: string | null;
+  location_id: string;
+  batch_number: string;
+  expiration_date: string;
+  initial_quantity: number;
+  current_quantity: number;
+  status: BatchStatus | null;
+  observations: string | null;
+  created_at: string;
+}
+
+export interface Movement {
+  id: string;
+  batch_id: string;
+  type: MovementType;
+  quantity: number;
+  destination_or_beneficiary: string | null;
+  registered_by: string | null;
+  motive_or_observation: string | null;
+  created_at: string;
+}
+
 export interface BatchItemFEFO {
   batch_id: string;
   trade_name: string;

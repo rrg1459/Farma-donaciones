@@ -4,10 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AlertOctagon, Snowflake } from 'lucide-react';
 import { Header } from '../components/Header';
+import {
+  mockBatches,
+  mockLocations,
+  mockMedications,
+} from '../../lib/mockInventory';
 
 interface StoredMedication {
   name: string;
-  quantity: string;
+  quantity: number;
 }
 
 interface WarehouseZone {
@@ -32,7 +37,12 @@ interface WarehouseZone {
   icon?: typeof Snowflake;
 }
 
-const warehouseZones: WarehouseZone[] = [
+type WarehouseZoneConfig = Omit<
+  WarehouseZone,
+  'counts' | 'items' | 'medications'
+>;
+
+const warehouseZoneConfigs: WarehouseZoneConfig[] = [
   {
     id: 'pas-a',
     title: 'Pasillo A',
@@ -40,12 +50,6 @@ const warehouseZones: WarehouseZone[] = [
     code: 'PAS-A',
     description: 'Antibióticos y Antihipertensivos',
     status: 'Ambiente Controlado',
-    counts: 'Estantes: 4',
-    items: '195 items',
-    medications: [
-      { name: 'Amoxicilina 500mg', quantity: '45 caps' },
-      { name: 'Losartán 50mg', quantity: '150 tabs' },
-    ],
     style: {
       card: 'bg-white border-slate-200 hover:border-emerald-500',
       selected: 'border-emerald-500',
@@ -63,12 +67,6 @@ const warehouseZones: WarehouseZone[] = [
     code: 'PAS-B',
     description: 'Analgésicos y Antiinflamatorios',
     status: 'Ambiente Libre',
-    counts: 'Estantes: 4',
-    items: '380 items',
-    medications: [
-      { name: 'Paracetamol 500mg', quantity: '300 tabs' },
-      { name: 'Ibuprofeno 400mg', quantity: '80 tabs' },
-    ],
     style: {
       card: 'bg-white border-slate-200 hover:border-emerald-500',
       selected: 'border-emerald-500',
@@ -86,12 +84,6 @@ const warehouseZones: WarehouseZone[] = [
     code: 'REF-1',
     description: 'Insulinas, Vacunas y Biológicos',
     status: '2°C a 8°C',
-    counts: 'Neveras: 2',
-    items: '62 items',
-    medications: [
-      { name: 'Insulina NPH', quantity: '12 frascos' },
-      { name: 'Vacunas Hepatitis B', quantity: '50 dosis' },
-    ],
     style: {
       card: 'bg-blue-50/60 border-blue-200 hover:border-blue-400',
       selected: 'border-blue-400',
@@ -110,9 +102,6 @@ const warehouseZones: WarehouseZone[] = [
     code: 'ZON-CUA',
     description: 'Medicamentos Caducados o Dañados',
     status: 'Acceso Restringido',
-    counts: 'Cajas: 3',
-    items: '15 items',
-    medications: [{ name: 'Aspirina Caducada', quantity: '15 tabs' }],
     style: {
       card: 'bg-red-50/60 border-red-200 hover:border-red-400',
       selected: 'border-red-300',
@@ -124,7 +113,56 @@ const warehouseZones: WarehouseZone[] = [
     },
     icon: AlertOctagon,
   },
+  {
+    id: 'pas-c',
+    title: 'Pasillo C',
+    structure: 'Estante C4',
+    code: 'PAS-C',
+    description: 'Inhaladores',
+    status: 'Ambiente Controlado',
+    style: {
+      card: 'bg-white border-slate-200 hover:border-emerald-500',
+      selected: 'border-emerald-500',
+      title: 'text-slate-900',
+      badge: 'bg-emerald-100 text-emerald-800',
+      description: 'text-slate-500',
+      counts: 'text-slate-600',
+      total: 'text-emerald-600',
+    },
+  },
 ];
+
+const warehouseZones: WarehouseZone[] = warehouseZoneConfigs.map((zone) => {
+  const locations = mockLocations.filter(
+    (location) => location.zone === zone.title,
+  );
+  const locationIds = new Set(locations.map((location) => location.id));
+  const medications = mockBatches
+    .filter((batch) => locationIds.has(batch.location_id))
+    .map((batch) => {
+      const medication = mockMedications.find(
+        (item) => item.id === batch.medication_id,
+      );
+      if (!medication) {
+        throw new Error(`Mock batch ${batch.id} has no related medication.`);
+      }
+
+      return {
+        name: `${medication.trade_name} ${medication.concentration} · Lote ${batch.batch_number}`,
+        quantity: batch.current_quantity,
+      };
+    });
+
+  return {
+    ...zone,
+    counts: `Ubicaciones: ${locations.length}`,
+    items: `${medications.reduce(
+      (total, medication) => total + medication.quantity,
+      0,
+    )} unidades`,
+    medications,
+  };
+});
 
 export default function MapPage() {
   const [selectedZoneId, setSelectedZoneId] = useState(warehouseZones[0].id);
@@ -225,7 +263,9 @@ export default function MapPage() {
                           className="flex justify-between rounded border border-slate-200 bg-slate-50 p-2"
                         >
                           <span>• {medication.name}</span>
-                          <span className="font-bold">{medication.quantity}</span>
+                          <span className="font-bold">
+                            {medication.quantity} unidades
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -235,7 +275,7 @@ export default function MapPage() {
 
               <div className="mt-4 border-t border-slate-100 pt-4">
                 <Link
-                  href="/inventario"
+                  href="/inventory"
                   className="block w-full rounded-lg bg-slate-900 px-4 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-800"
                 >
                   Ir al inventario para asignar medicamentos

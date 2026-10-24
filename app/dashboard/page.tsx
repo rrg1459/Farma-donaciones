@@ -2,66 +2,26 @@
 'use client';
 
 import React from 'react';
-// import { KpiCard } from '@/components/KpiCard';
 import { KpiCard } from '../components/KpiCard';
 import { Pill, AlertTriangle, XCircle, HeartHandshake, Clock, Snowflake, MapPin } from 'lucide-react';
 import { Header } from '../components/Header';
-
-// Tipos para la tabla FEFO
-interface BatchItemFEFO {
-  batch_id: string;
-  trade_name: string;
-  active_ingredient: string;
-  batch_number: string;
-  location_code: string;
-  expiration_date: string;
-  days_until_expiration: number;
-  current_quantity: number;
-  unit: string; // caps, frascos, tabs
-  requires_refrigeration: boolean;
-}
-
-// Datos de prueba tipados
-const mockFEFOItems: BatchItemFEFO[] = [
-  {
-    batch_id: 'b-1',
-    trade_name: 'Amoxicilina 500mg',
-    active_ingredient: 'Amoxicilina',
-    batch_number: 'LOT-2024-089',
-    location_code: 'PAS-A-SH2-T1',
-    expiration_date: '2026-11-10',
-    days_until_expiration: 18,
-    current_quantity: 45,
-    unit: 'caps',
-    requires_refrigeration: false,
-  },
-  {
-    batch_id: 'b-2',
-    trade_name: 'Insulina NPH 100 UI/ml',
-    active_ingredient: 'Insulina Humana',
-    batch_number: 'INS-7741-X',
-    location_code: 'REF-1-T2',
-    expiration_date: '2026-11-24',
-    days_until_expiration: 32,
-    current_quantity: 12,
-    unit: 'frascos',
-    requires_refrigeration: true,
-  },
-  {
-    batch_id: 'b-3',
-    trade_name: 'Paracetamol 500mg',
-    active_ingredient: 'Acetaminofén',
-    batch_number: 'PAR-9902-A',
-    location_code: 'PAS-B-SH1-T3',
-    expiration_date: '2027-01-16',
-    days_until_expiration: 85,
-    current_quantity: 300,
-    unit: 'tabs',
-    requires_refrigeration: false,
-  },
-];
+import { mockBatches, mockFEFOItems, mockMovements } from '../../lib/mockInventory';
 
 export default function DashboardPage() {
+  const totalUnits = mockBatches.reduce(
+    (total, batch) => total + batch.current_quantity,
+    0,
+  );
+  const expiringUnits = mockFEFOItems
+    .filter((item) => item.days_until_expiration >= 0 && item.days_until_expiration <= 60)
+    .reduce((total, item) => total + item.current_quantity, 0);
+  const expiredUnits = mockBatches
+    .filter((batch) => batch.status === 'expired')
+    .reduce((total, batch) => total + batch.current_quantity, 0);
+  const donatedUnits = mockMovements
+    .filter((movement) => movement.type === 'donation_exit')
+    .reduce((total, movement) => total + movement.quantity, 0);
+
   const handleDispense = (batchId: string) => {
     alert(`Modal de Entrega:\nDispensando lote ${batchId}.\n\nSe registrará la salida automáticamente con la regla FEFO.`);
   };
@@ -75,16 +35,16 @@ export default function DashboardPage() {
           aria-label="Indicadores principales"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          <KpiCard icon={<Pill className="w-6 h-6" />} subtitle="+12% recibido este mes" title="Total Unidades" value="4,850"
+          <KpiCard icon={<Pill className="w-6 h-6" />} subtitle="Unidades registradas en lotes" title="Total Unidades" value={totalUnits.toLocaleString('es')}
             variant="default"
           />
-          <KpiCard icon={<AlertTriangle className="w-6 h-6" />} subtitle="Requieren salida FEFO" title="Por Vencer (< 60 días)" value={180}
+          <KpiCard icon={<AlertTriangle className="w-6 h-6" />} subtitle="Requieren salida FEFO" title="Por Vencer (< 60 días)" value={expiringUnits}
             variant="warning"
           />
-          <KpiCard icon={<XCircle className="w-6 h-6" />} subtitle="En zona de cuarentena" title="Caducados (Retirar)" value={15}
+          <KpiCard icon={<XCircle className="w-6 h-6" />} subtitle="Lotes marcados para retirar" title="Caducados (Retirar)" value={expiredUnits}
             variant="danger"
           />
-          <KpiCard icon={<HeartHandshake className="w-6 h-6" />} subtitle="A 320 beneficiarios" title="Donaciones Entregadas" value="1,240"
+          <KpiCard icon={<HeartHandshake className="w-6 h-6" />} subtitle="Unidades registradas como salida" title="Donaciones Entregadas" value={donatedUnits.toLocaleString('es')}
             variant="success"
           />
         </section>
@@ -120,7 +80,9 @@ export default function DashboardPage() {
                 {mockFEFOItems.map((item) => (
                   <tr key={item.batch_id} className="hover:bg-slate-50/80 transition">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900">{item.trade_name}</div>
+                      <div className="font-semibold text-slate-900">
+                        {item.trade_name} {item.concentration}
+                      </div>
                       <div className="text-xs text-slate-500">Principio Activo: {item.active_ingredient}</div>
                       {item.requires_refrigeration && (
                         <span className="inline-flex items-center text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mt-1">
@@ -136,10 +98,12 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                        Quedan {item.days_until_expiration} días ({item.expiration_date})
+                        {item.days_until_expiration < 0
+                          ? `Caducado hace ${Math.abs(item.days_until_expiration)} días`
+                          : `Quedan ${item.days_until_expiration} días`} ({item.expiration_date})
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} {item.unit}</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} unidades</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleDispense(item.batch_id)}

@@ -1,109 +1,61 @@
 import { ArrowDownLeft, ArrowUpRight, History } from 'lucide-react';
 import { Header } from '../components/Header';
+import {
+  mockBatches,
+  mockDonors,
+  mockMedications,
+  mockMovements,
+  mockRegisteredUsers,
+} from '../../lib/mockInventory';
 
-type MovementType = 'Entrada' | 'Salida';
+const movementTypeLabels = {
+  donation_entry: 'Entrada por donación',
+  donation_exit: 'Salida por donación',
+  inventory_adjustment: 'Ajuste de inventario',
+  expired_discard: 'Descarte por caducidad',
+} as const;
 
-interface InventoryMovement {
-  id: string;
-  date: string;
-  time: string;
-  type: MovementType;
-  medication: string;
-  batch: string;
-  quantity: number;
-  unit: string;
-  contactLabel: 'Donante' | 'Beneficiario';
-  contact: string;
-  responsible: string;
-}
+const movementRows = [...mockMovements]
+  .sort((first, second) => second.created_at.localeCompare(first.created_at))
+  .map((movement) => {
+    const batch = mockBatches.find((item) => item.id === movement.batch_id);
+    if (!batch) {
+      throw new Error(`Mock movement ${movement.id} has no related batch.`);
+    }
 
-const mockMovements: InventoryMovement[] = [
-  {
-    id: 'mov-001',
-    date: '24 oct 2026',
-    time: '10:42',
-    type: 'Entrada',
-    medication: 'Amoxicilina 500 mg',
-    batch: 'AMX-2608-A',
-    quantity: 120,
-    unit: 'cápsulas',
-    contactLabel: 'Donante',
-    contact: 'Fundación Salud para Todos',
-    responsible: 'Laura Méndez',
-  },
-  {
-    id: 'mov-002',
-    date: '24 oct 2026',
-    time: '09:18',
-    type: 'Salida',
-    medication: 'Insulina NPH 100 UI/ml',
-    batch: 'INS-7741-X',
-    quantity: 4,
-    unit: 'frascos',
-    contactLabel: 'Beneficiario',
-    contact: 'Centro Comunitario San José',
-    responsible: 'Carlos Rivera',
-  },
-  {
-    id: 'mov-003',
-    date: '23 oct 2026',
-    time: '15:36',
-    type: 'Salida',
-    medication: 'Paracetamol 500 mg',
-    batch: 'PAR-9902-A',
-    quantity: 60,
-    unit: 'tabletas',
-    contactLabel: 'Beneficiario',
-    contact: 'Comedor Santa María',
-    responsible: 'Laura Méndez',
-  },
-  {
-    id: 'mov-004',
-    date: '23 oct 2026',
-    time: '11:05',
-    type: 'Entrada',
-    medication: 'Losartán 50 mg',
-    batch: 'LOS-3312-C',
-    quantity: 200,
-    unit: 'tabletas',
-    contactLabel: 'Donante',
-    contact: 'Farmacia San Miguel',
-    responsible: 'Ana Torres',
-  },
-  {
-    id: 'mov-005',
-    date: '22 oct 2026',
-    time: '14:27',
-    type: 'Salida',
-    medication: 'Ibuprofeno 400 mg',
-    batch: 'IBU-1140-B',
-    quantity: 40,
-    unit: 'tabletas',
-    contactLabel: 'Beneficiario',
-    contact: 'Clínica Comunitaria Norte',
-    responsible: 'Carlos Rivera',
-  },
-  {
-    id: 'mov-006',
-    date: '21 oct 2026',
-    time: '09:52',
-    type: 'Entrada',
-    medication: 'Vacuna Hepatitis B',
-    batch: 'VHB-6208-R',
-    quantity: 50,
-    unit: 'dosis',
-    contactLabel: 'Donante',
-    contact: 'Red Médica Solidaria',
-    responsible: 'Ana Torres',
-  },
-];
+    const medication = mockMedications.find(
+      (item) => item.id === batch.medication_id,
+    );
+    if (!medication) {
+      throw new Error(`Mock batch ${batch.id} has no related medication.`);
+    }
+
+    const donor = batch.donor_id
+      ? mockDonors.find((item) => item.id === batch.donor_id)
+      : undefined;
+    const isEntry = movement.type === 'donation_entry';
+
+    return {
+      ...movement,
+      medication: `${medication.trade_name} ${medication.concentration}`,
+      batch_number: batch.batch_number,
+      type_label: movementTypeLabels[movement.type],
+      contact_label: isEntry ? 'Donante' : 'Destino / beneficiario',
+      contact: isEntry
+        ? donor?.name_or_company ?? 'Donante no registrado'
+        : movement.destination_or_beneficiary ?? 'Sin destino registrado',
+      responsible: movement.registered_by
+        ? mockRegisteredUsers[movement.registered_by] ?? 'Usuario sin nombre'
+        : 'Usuario sin nombre',
+    };
+  });
 
 export default function MovementPage() {
-  const totalEntries = mockMovements.filter(
-    (movement) => movement.type === 'Entrada',
+  const totalEntries = movementRows.filter(
+    (movement) => movement.type === 'donation_entry',
   ).length;
-  const totalExits = mockMovements.filter(
-    (movement) => movement.type === 'Salida',
+  const totalExits = movementRows.filter(
+    (movement) => movement.type === 'donation_exit',
   ).length;
 
   return (
@@ -160,7 +112,7 @@ export default function MovementPage() {
             <div className="border-b border-slate-100 p-5">
               <h2 className="font-bold text-slate-900">Movimientos recientes</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                {mockMovements.length} registros de ejemplo ordenados del más reciente.
+                {movementRows.length} registros de ejemplo ordenados del más reciente.
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -176,9 +128,10 @@ export default function MovementPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {mockMovements.map((movement) => {
-                    const isEntry = movement.type === 'Entrada';
+                  {movementRows.map((movement) => {
+                    const isEntry = movement.type === 'donation_entry';
                     const MovementIcon = isEntry ? ArrowDownLeft : ArrowUpRight;
+                    const movementDate = new Date(movement.created_at);
 
                     return (
                       <tr
@@ -187,9 +140,18 @@ export default function MovementPage() {
                       >
                         <td className="whitespace-nowrap px-5 py-4">
                           <div className="font-medium text-slate-800">
-                            {movement.date}
+                            {movementDate.toLocaleDateString('es-MX', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
                           </div>
-                          <div className="text-xs text-slate-400">{movement.time}</div>
+                          <div className="text-xs text-slate-400">
+                            {movementDate.toLocaleTimeString('es-MX', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
                         </td>
                         <td className="px-5 py-4">
                           <span
@@ -200,7 +162,7 @@ export default function MovementPage() {
                             }`}
                           >
                             <MovementIcon className="h-3.5 w-3.5" />
-                            {movement.type}
+                            {movement.type_label}
                           </span>
                         </td>
                         <td className="px-5 py-4">
@@ -208,15 +170,15 @@ export default function MovementPage() {
                             {movement.medication}
                           </div>
                           <div className="font-mono text-xs text-slate-500">
-                            Lote: {movement.batch}
+                            Lote: {movement.batch_number}
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
-                          {movement.quantity} {movement.unit}
+                          {movement.quantity} unidades
                         </td>
                         <td className="px-5 py-4">
                           <div className="text-xs text-slate-400">
-                            {movement.contactLabel}
+                            {movement.contact_label}
                           </div>
                           <div className="font-medium text-slate-700">
                             {movement.contact}
