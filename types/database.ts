@@ -29,7 +29,21 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      deliver_medication_fefo: {
+        Args: {
+          p_medication_id: string;
+          p_quantity: number;
+          p_destination_or_beneficiary: string;
+          p_motive_or_observation?: string | null;
+        };
+        Returns: {
+          batch_id: string;
+          batch_number: string;
+          quantity: number;
+        }[];
+      };
+    };
     Enums: {
       pharmaceutical_form_enum: Medication['pharmaceutical_form'];
       batch_status_enum: NonNullable<Batch['status']>;

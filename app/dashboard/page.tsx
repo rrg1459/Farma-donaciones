@@ -1,18 +1,17 @@
 // app/dashboard/page.tsx
 'use client';
 
+import { useState } from 'react';
 import { KpiCard } from '../components/KpiCard';
 import { Pill, AlertTriangle, XCircle, HeartHandshake, Clock, Snowflake, MapPin } from 'lucide-react';
 import { Header } from '../components/Header';
 import { loadDashboardData } from '../../lib/inventoryData';
 import { useSupabaseData } from '../../lib/useSupabaseData';
+import { MedicationDelivery } from '../components/MedicationDelivery';
 
 export default function DashboardPage() {
   const { data, error, loading } = useSupabaseData(loadDashboardData);
-
-  const handleDispense = (batchId: string) => {
-    alert(`La salida del lote ${batchId} todavía no está conectada a Supabase.`);
-  };
+  const [deliveryBatchId, setDeliveryBatchId] = useState<string | null>(null);
 
   return (
     <>
@@ -113,7 +112,7 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} unidades</td>
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => handleDispense(item.batch_id)}
+                        onClick={() => setDeliveryBatchId(item.batch_id)}
                         className="text-xs bg-dispense hover:bg-purple-700 text-white font-semibold px-3 py-1.5 rounded-lg transition"
                       >
                         Dispensar
@@ -126,6 +125,12 @@ export default function DashboardPage() {
           </div>
         </section>
       </main>
+      {deliveryBatchId && (
+        <MedicationDelivery
+          initialBatchId={deliveryBatchId}
+          onClose={() => setDeliveryBatchId(null)}
+        />
+      )}
     </>
 
   );

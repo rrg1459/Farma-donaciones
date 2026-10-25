@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { INVENTORY_UPDATED_EVENT } from './inventoryData';
 
 interface SupabaseDataState<T> {
   data: T | null;
@@ -20,27 +21,33 @@ export function useSupabaseData<T>(
   useEffect(() => {
     let active = true;
 
-    loadData()
-      .then((data) => {
-        if (active) {
-          setState({ data, error: null, loading: false });
-        }
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setState({
-            data: null,
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Ocurrió un error inesperado al consultar Supabase.',
-            loading: false,
-          });
-        }
-      });
+    const refresh = () => {
+      loadData()
+        .then((data) => {
+          if (active) {
+            setState({ data, error: null, loading: false });
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setState({
+              data: null,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : 'Ocurrió un error inesperado al consultar Supabase.',
+              loading: false,
+            });
+          }
+        });
+    };
+
+    refresh();
+    window.addEventListener(INVENTORY_UPDATED_EVENT, refresh);
 
     return () => {
       active = false;
+      window.removeEventListener(INVENTORY_UPDATED_EVENT, refresh);
     };
   }, [loadData]);
 

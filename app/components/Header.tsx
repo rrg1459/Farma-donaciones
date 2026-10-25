@@ -1,12 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Pill, PlusCircle, ArrowUpRight, BarChart3, Boxes, MapPin, History } from 'lucide-react';
+import { MedicationDelivery } from './MedicationDelivery';
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
+  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
@@ -37,7 +39,11 @@ export const Header: React.FC = () => {
               <PlusCircle className="w-4 h-4"/>
               <span>Nueva Donación</span>
             </button>
-            <button className="bg-dispense hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2 transition">
+            <button
+              type="button"
+              onClick={() => setIsDeliveryOpen(true)}
+              className="bg-dispense hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2 transition"
+            >
               <ArrowUpRight className="w-4 h-4"/>
               <span>Entregar Medicamento</span>
             </button>
@@ -71,6 +77,9 @@ export const Header: React.FC = () => {
           })}
         </div>
       </nav>
+      {isDeliveryOpen && (
+        <MedicationDelivery onClose={() => setIsDeliveryOpen(false)} />
+      )}
     </>
   );
 };

@@ -39,6 +39,17 @@ export interface MovementRow extends Movement {
   donor: Donor | null;
 }
 
+export interface DeliveryMedicationOption {
+  id: string;
+  label: string;
+  active_ingredient: string;
+  available_quantity: number;
+  batch_count: number;
+  batch_ids: string[];
+}
+
+export const INVENTORY_UPDATED_EVENT = 'inventory-updated';
+
 function requireRows<T>(
   rows: T[] | null,
   error: { message: string } | null,
@@ -287,6 +298,68 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
       medication,
       donor: batch.donor_id ? donorById.get(batch.donor_id) ?? null : null,
     };
+  });
+}
+
+export async function loadDeliveryMedicationOptions(): Promise<
+  DeliveryMedicationOption[]
+> {
+  const supabase = getSupabaseClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const [batchesResponse, medicationsResponse] = await Promise.all([
+    supabase
+      .from('batches')
+      .select('id, medication_id, current_quantity')
+      .gt('current_quantity', 0)
+      .gte('expiration_date', today)
+      .in('status', ['available', 'expiring_soon']),
+    supabase
+      .from('medications')
+      .select('id, trade_name, active_ingredient, concentration')
+      .order('trade_name'),
+  ]);
+
+  const batches = requireRows(
+    batchesResponse.data,
+    batchesResponse.error,
+    'los lotes disponibles para entrega',
+  );
+  const medications = requireRows(
+    medicationsResponse.data,
+    medicationsResponse.error,
+    'la tabla medications',
+  );
+  const availableByMedication = new Map<
+    string,
+    { quantity: number; batches: number; ids: string[] }
+  >();
+
+  batches.forEach((batch) => {
+    const current = availableByMedication.get(batch.medication_id) ?? {
+      quantity: 0,
+      batches: 0,
+      ids: [],
+    };
+    current.quantity += batch.current_quantity;
+    current.batches += 1;
+    current.ids.push(batch.id);
+    availableByMedication.set(batch.medication_id, current);
+  });
+
+  return medications.flatMap((medication) => {
+    const available = availableByMedication.get(medication.id);
+    if (!available) {
+      return [];
+    }
+
+    return [{
+      id: medication.id,
+      label: `${medication.trade_name} ${medication.concentration}`,
+      active_ingredient: medication.active_ingredient,
+      available_quantity: available.quantity,
+      batch_count: available.batches,
+      batch_ids: available.ids,
+    }];
   });
 }
 
