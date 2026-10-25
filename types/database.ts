@@ -43,6 +43,33 @@ export interface Database {
           quantity: number;
         }[];
       };
+      register_donation: {
+        Args: {
+          p_donor_id: string | null;
+          p_donor_name: string;
+          p_donor_phone: string | null;
+          p_donor_email: string | null;
+          p_donor_type: string;
+          p_medication_id: string | null;
+          p_trade_name: string;
+          p_active_ingredient: string;
+          p_concentration: string;
+          p_pharmaceutical_form: Medication['pharmaceutical_form'];
+          p_requires_refrigeration: boolean;
+          p_requires_prescription: boolean;
+          p_location_id: string;
+          p_batch_number: string;
+          p_expiration_date: string;
+          p_quantity: number;
+          p_observations: string | null;
+        };
+        Returns: {
+          batch_id: string;
+          batch_number: string;
+          quantity: number;
+          status: NonNullable<Batch['status']>;
+        }[];
+      };
     };
     Enums: {
       pharmaceutical_form_enum: Medication['pharmaceutical_form'];

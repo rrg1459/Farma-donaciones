@@ -48,6 +48,12 @@ export interface DeliveryMedicationOption {
   batch_ids: string[];
 }
 
+export interface DonationFormOptions {
+  donors: Donor[];
+  medications: Medication[];
+  locations: Location[];
+}
+
 export const INVENTORY_UPDATED_EVENT = 'inventory-updated';
 
 function requireRows<T>(
@@ -361,6 +367,34 @@ export async function loadDeliveryMedicationOptions(): Promise<
       batch_ids: available.ids,
     }];
   });
+}
+
+export async function loadDonationFormOptions(): Promise<DonationFormOptions> {
+  const supabase = getSupabaseClient();
+  const [donorsResponse, medicationsResponse, locationsResponse] =
+    await Promise.all([
+      supabase.from('donors').select('*').order('name_or_company'),
+      supabase.from('medications').select('*').order('trade_name'),
+      supabase.from('locations').select('*').order('zone').order('location_code'),
+    ]);
+
+  return {
+    donors: requireRows(
+      donorsResponse.data,
+      donorsResponse.error,
+      'la tabla donors',
+    ),
+    medications: requireRows(
+      medicationsResponse.data,
+      medicationsResponse.error,
+      'la tabla medications',
+    ),
+    locations: requireRows(
+      locationsResponse.data,
+      locationsResponse.error,
+      'la tabla locations',
+    ),
+  };
 }
 
 export const movementTypeLabels: Record<MovementType, string> = {

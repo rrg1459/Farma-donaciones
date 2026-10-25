@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Pill, PlusCircle, ArrowUpRight, BarChart3, Boxes, MapPin, History } from 'lucide-react';
 import { MedicationDelivery } from './MedicationDelivery';
+import { NewDonation } from './NewDonation';
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
+  const [isDonationOpen, setIsDonationOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
@@ -35,7 +37,11 @@ export const Header: React.FC = () => {
 
 
           <div className="flex items-center space-x-4">
-            <button className="bg-accent hover:bg-emerald-600 text-primary font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2 transition">
+            <button
+              type="button"
+              onClick={() => setIsDonationOpen(true)}
+              className="bg-accent hover:bg-emerald-600 text-primary font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2 transition"
+            >
               <PlusCircle className="w-4 h-4"/>
               <span>Nueva Donación</span>
             </button>
@@ -79,6 +85,9 @@ export const Header: React.FC = () => {
       </nav>
       {isDeliveryOpen && (
         <MedicationDelivery onClose={() => setIsDeliveryOpen(false)} />
+      )}
+      {isDonationOpen && (
+        <NewDonation onClose={() => setIsDonationOpen(false)} />
       )}
     </>
   );
