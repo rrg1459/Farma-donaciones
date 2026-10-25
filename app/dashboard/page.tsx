@@ -1,29 +1,17 @@
 // app/dashboard/page.tsx
 'use client';
 
-import React from 'react';
 import { KpiCard } from '../components/KpiCard';
 import { Pill, AlertTriangle, XCircle, HeartHandshake, Clock, Snowflake, MapPin } from 'lucide-react';
 import { Header } from '../components/Header';
-import { mockBatches, mockFEFOItems, mockMovements } from '../../lib/mockInventory';
+import { loadDashboardData } from '../../lib/inventoryData';
+import { useSupabaseData } from '../../lib/useSupabaseData';
 
 export default function DashboardPage() {
-  const totalUnits = mockBatches.reduce(
-    (total, batch) => total + batch.current_quantity,
-    0,
-  );
-  const expiringUnits = mockFEFOItems
-    .filter((item) => item.days_until_expiration >= 0 && item.days_until_expiration <= 60)
-    .reduce((total, item) => total + item.current_quantity, 0);
-  const expiredUnits = mockBatches
-    .filter((batch) => batch.status === 'expired')
-    .reduce((total, batch) => total + batch.current_quantity, 0);
-  const donatedUnits = mockMovements
-    .filter((movement) => movement.type === 'donation_exit')
-    .reduce((total, movement) => total + movement.quantity, 0);
+  const { data, error, loading } = useSupabaseData(loadDashboardData);
 
   const handleDispense = (batchId: string) => {
-    alert(`Modal de Entrega:\nDispensando lote ${batchId}.\n\nSe registrará la salida automáticamente con la regla FEFO.`);
+    alert(`La salida del lote ${batchId} todavía no está conectada a Supabase.`);
   };
 
   return (
@@ -35,19 +23,24 @@ export default function DashboardPage() {
           aria-label="Indicadores principales"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          <KpiCard icon={<Pill className="w-6 h-6" />} subtitle="Unidades registradas en lotes" title="Total Unidades" value={totalUnits.toLocaleString('es')}
+          <KpiCard icon={<Pill className="w-6 h-6" />} subtitle="Unidades registradas en lotes" title="Total Unidades" value={data?.totalUnits.toLocaleString('es') ?? '—'}
             variant="default"
           />
-          <KpiCard icon={<AlertTriangle className="w-6 h-6" />} subtitle="Requieren salida FEFO" title="Por Vencer (< 60 días)" value={expiringUnits}
+          <KpiCard icon={<AlertTriangle className="w-6 h-6" />} subtitle="Requieren salida FEFO" title="Por Vencer (< 60 días)" value={data?.expiringUnits ?? '—'}
             variant="warning"
           />
-          <KpiCard icon={<XCircle className="w-6 h-6" />} subtitle="Lotes marcados para retirar" title="Caducados (Retirar)" value={expiredUnits}
+          <KpiCard icon={<XCircle className="w-6 h-6" />} subtitle="Lotes marcados para retirar" title="Caducados (Retirar)" value={data?.expiredUnits ?? '—'}
             variant="danger"
           />
-          <KpiCard icon={<HeartHandshake className="w-6 h-6" />} subtitle="Unidades registradas como salida" title="Donaciones Entregadas" value={donatedUnits.toLocaleString('es')}
+          <KpiCard icon={<HeartHandshake className="w-6 h-6" />} subtitle="Unidades registradas como salida" title="Donaciones Entregadas" value={data?.donatedUnits.toLocaleString('es') ?? '—'}
             variant="success"
           />
         </section>
+        {error && (
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
         {/* TABLA FEFO PRIORITARIA */}
         <section
@@ -77,7 +70,21 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {mockFEFOItems.map((item) => (
+                {loading && (
+                  <tr>
+                    <td className="px-6 py-6 text-center" colSpan={6}>
+                      Cargando inventario desde Supabase...
+                    </td>
+                  </tr>
+                )}
+                {!loading && !error && data?.fefoItems.length === 0 && (
+                  <tr>
+                    <td className="px-6 py-6 text-center" colSpan={6}>
+                      No hay lotes disponibles en la vista FEFO.
+                    </td>
+                  </tr>
+                )}
+                {!loading && !error && data?.fefoItems.map((item) => (
                   <tr key={item.batch_id} className="hover:bg-slate-50/80 transition">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">

@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Header } from '../components/Header';
 import type { BatchStatus } from '../../types/inventory';
-import { mockBatches, mockFEFOItems, mockLocations } from '../../lib/mockInventory';
+import { loadInventoryRows } from '../../lib/inventoryData';
+import { useSupabaseData } from '../../lib/useSupabaseData';
 
 const statusLabels: Record<BatchStatus, string> = {
   available: 'Disponible',
@@ -19,17 +20,9 @@ export default function InventarioPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-
-  const mockInventory = mockFEFOItems.map((item) => {
-    const batch = mockBatches.find((candidate) => candidate.id === item.batch_id);
-    if (!batch) {
-      throw new Error(`FEFO batch ${item.batch_id} is missing from mock batches.`);
-    }
-
-    return { ...item, id: item.batch_id, status: batch.status };
-  });
-
-  const filteredInventory = mockInventory.filter((item) =>
+  const { data, error, loading } = useSupabaseData(loadInventoryRows);
+  const inventory = data?.rows ?? [];
+  const filteredInventory = inventory.filter((item) =>
     (item.trade_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.active_ingredient.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.batch_number.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -64,7 +57,7 @@ export default function InventarioPage() {
               className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todas las Ubicaciones</option>
-              {mockLocations.map((location) => (
+              {data?.locations.map((location) => (
                 <option key={location.id} value={location.location_code}>
                   {location.location_code}
                 </option>
@@ -91,6 +84,11 @@ export default function InventarioPage() {
           aria-label="Inventario completo"
           className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
         >
+          {error && (
+            <p role="alert" className="border-b border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {error}
+            </p>
+          )}
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
               <tr>
@@ -104,6 +102,20 @@ export default function InventarioPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {loading && (
+                <tr>
+                  <td className="px-6 py-6 text-center" colSpan={7}>
+                    Cargando lotes desde Supabase...
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && filteredInventory.length === 0 && (
+                <tr>
+                  <td className="px-6 py-6 text-center" colSpan={7}>
+                    No se encontraron lotes con esos filtros.
+                  </td>
+                </tr>
+              )}
               {filteredInventory.map((item) => {
                 // Lógica visual para la etiqueta de ubicación
                 const locationStyle =
