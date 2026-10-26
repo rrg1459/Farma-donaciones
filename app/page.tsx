@@ -1,6 +1,6 @@
-// app/page.tsx
 import Link from 'next/link';
-import { Pill, ArrowRight, ShieldCheck, Clock, MapPin } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Clock, MapPin } from 'lucide-react';
+import PillsLogo from './components/PillsLogo';
 
 export default function Home() {
   return (
@@ -9,9 +9,9 @@ export default function Home() {
       <header className="max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="bg-[#05D49B] p-2.5 rounded-xl text-slate-950 font-black">
-            <Pill className="w-6 h-6" />
+            <PillsLogo size={24} />
           </div>
-          <span className="font-bold text-xl tracking-tight">FarmaDonaciones</span>
+          <span className="font-bold text-xl tracking-tight">FarmaffDonaciones</span>
         </div>
         <Link
           href="/dashboard"
