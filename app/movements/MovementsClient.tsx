@@ -171,9 +171,10 @@ export default function MovementPage() {
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4">
-                          {movement.registered_by
-                            ? 'Usuario registrado'
-                            : 'Sin asignar'}
+                          {movement.registered_by_name ??
+                            (movement.registered_by
+                              ? 'Responsable no disponible'
+                              : 'Sin asignar')}
                         </td>
                       </tr>
                     );
