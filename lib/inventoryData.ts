@@ -37,6 +37,7 @@ export interface MovementRow extends Movement {
   batch_number: string;
   medication: Medication;
   donor: Donor | null;
+  registered_by_name: string | null;
 }
 
 export interface DeliveryMedicationOption {
@@ -280,11 +281,30 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
     donorsResponse.error,
     'la tabla donors',
   );
+  const registrarIds = [
+    ...new Set(
+      movements
+        .map((movement) => movement.registered_by)
+        .filter((userId): userId is string => userId !== null),
+    ),
+  ];
+  const registrarNamesResponse = await supabase.rpc(
+    'get_movement_registrar_emails',
+    { p_user_ids: registrarIds },
+  );
+  const registrarNames = requireRows(
+    registrarNamesResponse.data,
+    registrarNamesResponse.error,
+    'los nombres de los responsables de movimientos',
+  );
   const batchById = new Map(batches.map((batch) => [batch.id, batch]));
   const medicationById = new Map(
     medications.map((medication) => [medication.id, medication]),
   );
   const donorById = new Map(donors.map((donor) => [donor.id, donor]));
+  const registrarNameById = new Map(
+    registrarNames.map(({ user_id, full_name }) => [user_id, full_name]),
+  );
 
   return movements.map((movement) => {
     const batch = batchById.get(movement.batch_id);
@@ -303,6 +323,9 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
       batch_number: batch.batch_number,
       medication,
       donor: batch.donor_id ? donorById.get(batch.donor_id) ?? null : null,
+      registered_by_name: movement.registered_by
+        ? registrarNameById.get(movement.registered_by) ?? null
+        : null,
     };
   });
 }
