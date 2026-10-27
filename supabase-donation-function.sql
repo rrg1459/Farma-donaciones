@@ -29,11 +29,17 @@ SECURITY INVOKER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
+  v_registered_by UUID := auth.uid();
   v_donor_id UUID;
   v_medication_id UUID;
   v_batch_id UUID;
   v_status public.batch_status_enum;
 BEGIN
+  IF v_registered_by IS NULL THEN
+    RAISE EXCEPTION 'Debe iniciar sesión para registrar una donación.'
+      USING ERRCODE = '28000';
+  END IF;
+
   IF p_quantity IS NULL OR p_quantity <= 0 THEN
     RAISE EXCEPTION 'La cantidad recibida debe ser un entero mayor que cero.';
   END IF;
@@ -149,7 +155,7 @@ BEGIN
     'donation_entry'::public.movement_type_enum,
     p_quantity,
     NULL,
-    auth.uid(),
+    v_registered_by,
     NULLIF(BTRIM(p_observations), '')
   );
 
@@ -161,6 +167,11 @@ $$;
 GRANT EXECUTE ON FUNCTION public.register_donation(
   UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
   public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, DATE, INTEGER, TEXT
-) TO anon, authenticated;
+) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.register_donation(
+  UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
+  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, DATE, INTEGER, TEXT
+) FROM PUBLIC, anon;
 
 NOTIFY pgrst, 'reload schema';

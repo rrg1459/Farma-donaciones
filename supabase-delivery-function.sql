@@ -15,10 +15,16 @@ SECURITY INVOKER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
+  v_registered_by UUID := auth.uid();
   v_remaining INTEGER := p_quantity;
   v_quantity INTEGER;
   v_batch RECORD;
 BEGIN
+  IF v_registered_by IS NULL THEN
+    RAISE EXCEPTION 'Debe iniciar sesión para registrar una entrega.'
+      USING ERRCODE = '28000';
+  END IF;
+
   IF p_quantity IS NULL OR p_quantity <= 0 THEN
     RAISE EXCEPTION 'La cantidad debe ser un entero mayor que cero.';
   END IF;
@@ -65,7 +71,7 @@ BEGIN
       'donation_exit'::public.movement_type_enum,
       v_quantity,
       BTRIM(p_destination_or_beneficiary),
-      auth.uid(),
+      v_registered_by,
       NULLIF(BTRIM(p_motive_or_observation), '')
     );
 
@@ -84,7 +90,9 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT)
+  FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT)
-  TO anon, authenticated;
+  TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
