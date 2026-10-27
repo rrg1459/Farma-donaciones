@@ -70,6 +70,15 @@ export interface Database {
           status: NonNullable<Batch['status']>;
         }[];
       };
+      get_movement_registrar_emails: {
+        Args: {
+          p_user_ids: string[];
+        };
+        Returns: {
+          user_id: string;
+          full_name: string;
+        }[];
+      };
     };
     Enums: {
       pharmaceutical_form_enum: Medication['pharmaceutical_form'];
