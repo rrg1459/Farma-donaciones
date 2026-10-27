@@ -97,7 +97,6 @@ export default async function AdminPage() {
       <AdminHeader userInitials={userInitials} />
       <DashboardClient
         userName={userName}
-        userRole={userRole}
         initialUsers={authUsers}
         appSettings={appSettings ?? []}
       />
