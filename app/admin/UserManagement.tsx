@@ -127,10 +127,10 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
 
   return (
     <>
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-12">
 
         {/* COLUMNA 1: FORMULARIO DE CREACIÓN */}
-        <section className="lg:col-span-5 bg-white p-6 rounded-xl shadow-xs border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-5">
           <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800 dark:text-zinc-200">
             Panel de Gestión de Usuarios
           </h2>
@@ -197,7 +197,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
         </section>
 
         {/* COLUMNA 2: LISTADO CON EDICIÓN INTEGRADA */}
-        <section className="lg:col-span-7 bg-white p-6 rounded-xl shadow-xs border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-7">
           <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800 dark:text-zinc-200">
             Usuarios Registrados ({initialUsers.length})
           </h2>
