@@ -10,46 +10,39 @@ export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
   return (
     <>
       {/* Top Header */}
-      <header className="bg-primary text-white p-4 shadow-md z-10 sticky top-0">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-10 bg-primary p-3 text-white shadow-md sm:p-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
 
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="bg-emerald-500 p-1 rounded-xl text-slate-950 font-black">
-              <PillsLogo size={36} />
+          <Link href="/" className="flex min-w-0 items-center space-x-2 sm:space-x-3">
+            <div className="shrink-0 rounded-xl bg-emerald-500 p-1 font-black text-slate-950">
+              <PillsLogo size={32} />
             </div>
-            <div>
-              <h1 className="font-bold text-lg leading-none">FarmaDonaciones</h1>
-              <span className="text-xs text-slate-400">Almacén Central • Panel Operativo</span>
+            <div className="min-w-0">
+              <h1 className="whitespace-nowrap text-base font-bold leading-none sm:text-lg mb-1">FarmaDonaciones</h1>
+              <span className="hidden text-xs text-slate-400 sm:block">Almacén Central • Panel Operativo</span>
             </div>
           </Link>
 
 
-          <div className="flex items-center space-x-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
 
-            <h2 className="font-bold text-lg leading-none">
+            <h2 className="sr-only font-bold leading-none sm:not-sr-only sm:block sm:text-lg">
               Administración de Usuarios
-              </h2>
+            </h2>
 
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-xs text-emerald-400 border border-slate-600">
+            <div aria-label={`Usuario ${userInitials}`} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-xs font-bold text-emerald-400">
               {userInitials}
             </div>
 
-
-
-
-
             <form action={logout} className="flex items-center">
-              <button type="submit" className="text-zinc-300 dark:text-zinc-200 my-2 rounded-md font-semibold hover:bg-gray-700 dark:hover:bg-zinc-600 transition-colors cursor-pointer text-sm">
-                <FaSignOutAlt size={30} />
+              <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="my-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-gray-700 dark:text-zinc-200 dark:hover:bg-zinc-600">
+                <FaSignOutAlt size={26} />
               </button>
             </form>
 
           </div>
         </div>
       </header>
-
-
-
     </>
   );
 };
