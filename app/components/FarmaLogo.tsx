@@ -1,5 +1,5 @@
 import Image from "next/image";
-import farmaLogo from "../../public/farmadonaciones.png";
+import farmaLogo from "../../public/farmadonaciones-short.png";
 
 interface FarmaLogoProps {
   size?: number;
@@ -23,7 +23,7 @@ export default function FarmaLogo({
       priority={priority}
       placeholder="blur"
       style={{ width: `${size}px`, height: "auto" }}
-      className={`object-contain flex-shrink-0 ${className}`.trim()}
+      className={`py-12 object-contain flex-shrink-0 ${className}`.trim()}
       sizes={`${size}px`}
     />
   );

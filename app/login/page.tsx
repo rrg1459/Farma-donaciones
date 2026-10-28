@@ -12,7 +12,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white dark:bg-zinc-800 p-8 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700">
 
         <div className="text-center mb-6">
-          <FarmaLogo size={180} priority className="mx-auto mb-4" />
+          <FarmaLogo size={240} priority className="mx-auto mb-4" />
 
         </div>
 
