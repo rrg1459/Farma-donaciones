@@ -17,12 +17,12 @@ export default function MovementPage() {
 
   return (
     <>
-      <main className="mx-auto w-full max-w-7xl space-y-6 p-6">
+      <main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-6">
         <section aria-labelledby="movements-heading">
           <div className="mb-5">
             <h1
               id="movements-heading"
-              className="flex items-center text-2xl font-bold text-slate-900"
+              className="flex items-center text-xl font-bold text-slate-900 sm:text-2xl"
             >
               <History className="mr-2 h-6 w-6 text-emerald-600" />
               Historial de Movimientos
@@ -80,7 +80,7 @@ export default function MovementPage() {
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
+              <table className="w-full min-w-[760px] text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase text-slate-500">
                   <tr>
                     <th scope="col" className="px-5 py-3">Fecha</th>
@@ -113,8 +113,8 @@ export default function MovementPage() {
                     const contact = isEntry
                       ? movement.donor?.name_or_company ?? 'Donante no registrado'
                       : movement.destination_or_beneficiary ??
-                        movement.motive_or_observation ??
-                        'Sin destino registrado';
+                      movement.motive_or_observation ??
+                      'Sin destino registrado';
 
                     return (
                       <tr
@@ -138,13 +138,12 @@ export default function MovementPage() {
                         </td>
                         <td className="px-5 py-4">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              isEntry
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : movement.type === 'donation_exit'
-                                  ? 'bg-violet-50 text-violet-700'
-                                  : 'bg-slate-100 text-slate-700'
-                            }`}
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${isEntry
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : movement.type === 'donation_exit'
+                                ? 'bg-violet-50 text-violet-700'
+                                : 'bg-slate-100 text-slate-700'
+                              }`}
                           >
                             <MovementIcon className="h-3.5 w-3.5" />
                             {movementTypeLabels[movement.type]}
