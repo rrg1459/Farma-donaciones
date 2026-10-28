@@ -53,33 +53,33 @@ function buildWarehouseZones(locations: WarehouseLocation[]): WarehouseZone[] {
     );
     const style = isQuarantine
       ? {
-          card: 'bg-red-50/60 border-red-200 hover:border-red-400',
-          selected: 'border-red-300',
-          title: 'text-red-950',
-          badge: 'bg-red-200 text-red-900',
-          description: 'text-red-600',
-          counts: 'text-red-900',
-          total: 'text-red-700',
-        }
+        card: 'bg-red-50/60 border-red-200 hover:border-red-400',
+        selected: 'border-red-300',
+        title: 'text-red-950',
+        badge: 'bg-red-200 text-red-900',
+        description: 'text-red-600',
+        counts: 'text-red-900',
+        total: 'text-red-700',
+      }
       : isRefrigerated
         ? {
-            card: 'bg-blue-50/60 border-blue-200 hover:border-blue-400',
-            selected: 'border-blue-400',
-            title: 'text-blue-950',
-            badge: 'bg-blue-200 text-blue-900',
-            description: 'text-blue-600',
-            counts: 'text-blue-900',
-            total: 'text-blue-700',
-          }
+          card: 'bg-blue-50/60 border-blue-200 hover:border-blue-400',
+          selected: 'border-blue-400',
+          title: 'text-blue-950',
+          badge: 'bg-blue-200 text-blue-900',
+          description: 'text-blue-600',
+          counts: 'text-blue-900',
+          total: 'text-blue-700',
+        }
         : {
-            card: 'bg-white border-slate-200 hover:border-emerald-500',
-            selected: 'border-emerald-500',
-            title: 'text-slate-900',
-            badge: 'bg-emerald-100 text-emerald-800',
-            description: 'text-slate-500',
-            counts: 'text-slate-600',
-            total: 'text-emerald-600',
-          };
+          card: 'bg-white border-slate-200 hover:border-emerald-500',
+          selected: 'border-emerald-500',
+          title: 'text-slate-900',
+          badge: 'bg-emerald-100 text-emerald-800',
+          description: 'text-slate-500',
+          counts: 'text-slate-600',
+          total: 'text-emerald-600',
+        };
 
     return {
       id: zoneName,
@@ -123,8 +123,8 @@ export default function MapPage() {
 
   return (
     <>
-      <main className="mx-auto max-w-7xl space-y-6 p-6">
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-6">
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-4">
             <h2 className="text-lg font-bold text-slate-900">
               Distribución del Almacén Central
@@ -172,7 +172,7 @@ export default function MapPage() {
                       <div className="flex items-center justify-between gap-2">
                         <span className={`flex items-center text-sm font-bold ${zone.style.title}`}>
                           {Icon && <Icon className="mr-1 h-4 w-4 text-blue-500" />}
-                          {zone.title}
+                          <span className="break-words">{zone.title}</span>
                         </span>
                         <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${zone.style.badge}`}>
                           {zone.status}
@@ -202,7 +202,7 @@ export default function MapPage() {
                       {selectedZone.title}
                     </h3>
                     <span className="rounded bg-slate-100 px-2 py-1 font-mono text-xs">
-                      {selectedZone.code}
+                      <span className="break-all">{selectedZone.code}</span>
                     </span>
                   </div>
 
@@ -226,8 +226,8 @@ export default function MapPage() {
                             key={medication.id}
                             className="flex justify-between rounded border border-slate-200 bg-slate-50 p-2"
                           >
-                            <span>• {medication.name}</span>
-                            <span className="font-bold">
+                            <span className="min-w-0 break-words">• {medication.name}</span>
+                            <span className="shrink-0 font-bold">
                               {medication.quantity} unidades
                             </span>
                           </li>
