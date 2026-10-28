@@ -91,7 +91,7 @@ export default function InventarioPage() {
               <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3">Medicamento</th>
-                  <th className="px-6 py-3">Principio Activo</th>
+                  <th className="w-[15%] px-3 py-3">Principio Activo</th>
                   <th className="px-6 py-3">Lote</th>
                   <th className="px-6 py-3">Ubicación</th>
                   <th className="px-6 py-3">Vencimiento</th>
@@ -126,10 +126,10 @@ export default function InventarioPage() {
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         {item.trade_name} {item.concentration}
                       </td>
-                      <td className="px-6 py-4">{item.active_ingredient}</td>
-                      <td className="px-6 py-4 font-mono text-xs">{item.batch_number}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-mono rounded border ${locationStyle}`}>
+                      <td className="max-w-40 px-3 py-4">{item.active_ingredient}</td>
+                      <td className="whitespace-nowrap px-6 py-4 font-mono text-sm">{item.batch_number}</td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span className={`whitespace-nowrap rounded border px-2 py-1 font-mono text-sm ${locationStyle}`}>
                           {item.location_code}
                         </span>
                       </td>

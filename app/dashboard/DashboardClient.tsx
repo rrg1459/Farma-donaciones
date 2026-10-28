@@ -93,7 +93,8 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-700">{item.batch_number}</td>
+                    {/* <td className="px-6 py-4 font-mono text-xs text-slate-700">{item.batch_number}</td> */}
+                    <td className="whitespace-nowrap px-6 py-4 font-mono text-sm">{item.batch_number}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         <MapPin className="w-3 h-3 mr-1 text-slate-400" /> {item.location_code}
