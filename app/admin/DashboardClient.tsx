@@ -3,7 +3,6 @@
 import { useState } from "react";
 import UserManagement from "./UserManagement";
 import { User } from "@supabase/supabase-js";
-
 interface DashboardClientProps {
   userName: string;
   initialUsers: User[];
@@ -16,7 +15,7 @@ export default function DashboardClient({
   const [isNavigating] = useState(false);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-6">
+    <div className="min-h-screen bg-zinc-50 p-3 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 sm:p-6">
       <div className="max-w-5xl mx-auto">
 
         {isNavigating && (
@@ -27,7 +26,7 @@ export default function DashboardClient({
         )}
 
         {!isNavigating && (
-          <main className="mt-4">
+          <main className="mt-3 sm:mt-4">
             <UserManagement initialUsers={initialUsers} />
           </main>
         )}
