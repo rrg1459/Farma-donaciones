@@ -27,8 +27,6 @@ export default async function AdminPage() {
     .eq("id", user.id)
     .single();
 
-  console.log('page profile-->: ', profile);
-
   const userName = profile?.full_name?.trim().split(/\s+/).slice(0, 2).join(" ") || "Usuario";
   const userInitials = initials(profile?.full_name || "U");
   const userRole = profile?.role || "volunteer";
@@ -55,8 +53,6 @@ export default async function AdminPage() {
   // 4. FILTRAR SI EL USUARIO ES SOLO 'admin'
   if (userRole === "admin") {
     // Un admin solo puede gestionar usuarios con rol 'volunteer'
-
-    console.log('pagedentro del if de admin --- KABUMMM 87');
 
     const { data: volunteerProfiles, error: volunteerProfilesError } = await supabaseAdmin
       .from("profiles")
