@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -14,7 +13,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <main className="p-6 space-y-6 max-w-7xl mx-auto">
+      <main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-6">
         {/* SECCIÓN DE KPIS */}
         <section
           aria-label="Indicadores principales"
@@ -44,18 +43,18 @@ export default function DashboardPage() {
           aria-labelledby="fefo-heading"
           className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
         >
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
             <div>
-              <h2 id="fefo-heading" className="font-bold text-slate-900 flex items-center text-base">
+              <h2 id="fefo-heading" className="flex items-center text-sm font-bold text-slate-900 sm:text-base">
                 <Clock className="w-5 h-5 text-amber-500 mr-2" />
                 Prioridad de Salida (Regla FEFO)
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">Medicamentos ordenados automáticamente por fecha de caducidad más cercana.</p>
+              <p className="mt-0.5 text-xs text-slate-500">Medicamentos ordenados automáticamente por fecha de caducidad más cercana.</p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
+            <table className="w-full min-w-[760px] text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3">Medicamento / Principio Activo</th>
@@ -130,6 +129,5 @@ export default function DashboardPage() {
         />
       )}
     </>
-
   );
 }
