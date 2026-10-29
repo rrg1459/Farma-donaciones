@@ -234,7 +234,7 @@ export function MedicationDelivery({
               <legend className="px-1 text-sm font-semibold text-rose-900">
                 ¿Entregó la receta?
               </legend>
-              <div className="flex flex-col gap-2 sm:flex-row sm:gap-5">
+              <div className="flex flex-row gap-5">
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                   <input
                     required
