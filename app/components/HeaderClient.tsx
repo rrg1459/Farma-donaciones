@@ -71,8 +71,8 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
             {(userRole === 'admin' || userRole === 'superadmin') && (
               <Link
                 href="/admin"
-                aria-label="Administración de usuarios"
-                title="Administración de usuarios"
+                aria-label="Panel de Administración"
+                title="Panel de Administración"
                 className="inline-flex h-10 w-10 items-center justify-center flex-shrink-0"
               >
                 <FcSettings size={30} />

@@ -27,7 +27,7 @@ export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
 
             <h2 className="sr-only font-bold leading-none sm:not-sr-only sm:block sm:text-lg">
-              Administración de Usuarios
+              Panel de Administración
             </h2>
 
             <div aria-label={`Usuario ${userInitials}`} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-xs font-bold text-emerald-400">
