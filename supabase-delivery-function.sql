@@ -1,9 +1,15 @@
 -- Ejecuta este script despues del esquema inicial para habilitar entregas atomicas FEFO.
+ALTER TABLE public.movements
+  ADD COLUMN IF NOT EXISTS prescription_delivered BOOLEAN;
+
+DROP FUNCTION IF EXISTS public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.deliver_medication_fefo(
   p_medication_id UUID,
   p_quantity INTEGER,
   p_destination_or_beneficiary TEXT,
-  p_motive_or_observation TEXT DEFAULT NULL
+  p_motive_or_observation TEXT DEFAULT NULL,
+  p_prescription_delivered BOOLEAN DEFAULT NULL
 )
 RETURNS TABLE (
   batch_id UUID,
@@ -19,6 +25,7 @@ DECLARE
   v_remaining INTEGER := p_quantity;
   v_quantity INTEGER;
   v_batch RECORD;
+  v_requires_prescription BOOLEAN;
 BEGIN
   IF v_registered_by IS NULL THEN
     RAISE EXCEPTION 'Debe iniciar sesión para registrar una entrega.'
@@ -31,6 +38,19 @@ BEGIN
 
   IF NULLIF(BTRIM(p_destination_or_beneficiary), '') IS NULL THEN
     RAISE EXCEPTION 'El destino o beneficiario es obligatorio.';
+  END IF;
+
+  SELECT m.requires_prescription
+  INTO v_requires_prescription
+  FROM public.medications AS m
+  WHERE m.id = p_medication_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'El medicamento seleccionado no existe.';
+  END IF;
+
+  IF v_requires_prescription AND p_prescription_delivered IS NULL THEN
+    RAISE EXCEPTION 'Indique si se entregó la receta del medicamento.';
   END IF;
 
   FOR v_batch IN
@@ -63,6 +83,7 @@ BEGIN
       type,
       quantity,
       destination_or_beneficiary,
+      prescription_delivered,
       registered_by,
       motive_or_observation
     )
@@ -71,6 +92,10 @@ BEGIN
       'donation_exit'::public.movement_type_enum,
       v_quantity,
       BTRIM(p_destination_or_beneficiary),
+      CASE
+        WHEN v_requires_prescription THEN p_prescription_delivered
+        ELSE NULL
+      END,
       v_registered_by,
       NULLIF(BTRIM(p_motive_or_observation), '')
     );
@@ -90,9 +115,9 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT)
+REVOKE ALL ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT, BOOLEAN)
   FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT)
+GRANT EXECUTE ON FUNCTION public.deliver_medication_fefo(UUID, INTEGER, TEXT, TEXT, BOOLEAN)
   TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
