@@ -57,7 +57,12 @@ export interface Database {
           p_pharmaceutical_form: Medication['pharmaceutical_form'];
           p_requires_refrigeration: boolean;
           p_requires_prescription: boolean;
-          p_location_id: string;
+          p_location_id: string | null;
+          p_location_zone: string | null;
+          p_location_shelf_unit: string | null;
+          p_location_tier_bin: string | null;
+          p_location_code: string | null;
+          p_location_description: string | null;
           p_batch_number: string;
           p_expiration_date: string;
           p_quantity: number;
