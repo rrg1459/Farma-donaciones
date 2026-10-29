@@ -88,12 +88,32 @@ export default async function AdminPage() {
 
   }
 
+  const [medicationsResponse, locationsResponse, donorsResponse] =
+    await Promise.all([
+      supabaseAdmin.from("medications").select("*").order("trade_name"),
+      supabaseAdmin.from("locations").select("*").order("location_code"),
+      supabaseAdmin.from("donors").select("*").order("name_or_company"),
+    ]);
+
+  if (medicationsResponse.error) {
+    throw new Error(`No se pudieron consultar los medicamentos: ${medicationsResponse.error.message}`);
+  }
+  if (locationsResponse.error) {
+    throw new Error(`No se pudieron consultar las ubicaciones: ${locationsResponse.error.message}`);
+  }
+  if (donorsResponse.error) {
+    throw new Error(`No se pudieron consultar los donantes: ${donorsResponse.error.message}`);
+  }
+
   return (
     <>
       <AdminHeader userInitials={userInitials} />
       <DashboardClient
         userName={userName}
         initialUsers={authUsers}
+        initialMedications={medicationsResponse.data ?? []}
+        initialLocations={locationsResponse.data ?? []}
+        initialDonors={donorsResponse.data ?? []}
         appSettings={appSettings ?? []}
       />
     </>
