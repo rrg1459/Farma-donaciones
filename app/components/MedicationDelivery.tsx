@@ -26,6 +26,7 @@ export function MedicationDelivery({
   const [medicationId, setMedicationId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [destination, setDestination] = useState('');
+  const [prescriptionDelivered, setPrescriptionDelivered] = useState<boolean | null>(null);
   const [motive, setMotive] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export function MedicationDelivery({
     requestedQuantity > 0 &&
     requestedQuantity <= (selectedMedication?.available_quantity ?? 0) &&
     destination.trim().length > 0 &&
+    (!selectedMedication?.requires_prescription || prescriptionDelivered !== null) &&
     !submitting;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -69,6 +71,9 @@ export function MedicationDelivery({
           p_quantity: requestedQuantity,
           p_destination_or_beneficiary: destination.trim(),
           p_motive_or_observation: motive.trim() || null,
+          p_prescription_delivered: selectedMedication.requires_prescription
+            ? prescriptionDelivered
+            : null,
         },
       );
 
@@ -163,6 +168,7 @@ export function MedicationDelivery({
               value={selectedMedicationId}
               onChange={(event) => {
                 setMedicationId(event.target.value);
+                setPrescriptionDelivered(null);
                 setSuccessMessage(null);
               }}
               disabled={loading || !medications?.length || submitting}
@@ -222,6 +228,48 @@ export function MedicationDelivery({
               className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
             />
           </label>
+
+          {selectedMedication?.requires_prescription && (
+            <fieldset className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
+              <legend className="px-1 text-sm font-semibold text-rose-900">
+                ¿Entregó la receta?
+              </legend>
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-5">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    required
+                    type="radio"
+                    name="prescription-delivered"
+                    value="yes"
+                    checked={prescriptionDelivered === true}
+                    onChange={() => {
+                      setPrescriptionDelivered(true);
+                      setSuccessMessage(null);
+                    }}
+                    disabled={submitting}
+                    className="h-4 w-4 accent-rose-600"
+                  />
+                  Sí, entregó receta
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    required
+                    type="radio"
+                    name="prescription-delivered"
+                    value="no"
+                    checked={prescriptionDelivered === false}
+                    onChange={() => {
+                      setPrescriptionDelivered(false);
+                      setSuccessMessage(null);
+                    }}
+                    disabled={submitting}
+                    className="h-4 w-4 accent-rose-600"
+                  />
+                  No entregó receta
+                </label>
+              </div>
+            </fieldset>
+          )}
 
           <label className="block space-y-1.5">
             <span className="text-sm font-semibold text-slate-700">
