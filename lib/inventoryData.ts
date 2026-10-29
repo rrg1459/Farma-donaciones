@@ -44,6 +44,7 @@ export interface DeliveryMedicationOption {
   id: string;
   label: string;
   active_ingredient: string;
+  requires_prescription: boolean;
   available_quantity: number;
   batch_count: number;
   batch_ids: string[];
@@ -345,7 +346,7 @@ export async function loadDeliveryMedicationOptions(): Promise<
       .in('status', ['available', 'expiring_soon']),
     supabase
       .from('medications')
-      .select('id, trade_name, active_ingredient, concentration')
+      .select('id, trade_name, active_ingredient, concentration, requires_prescription')
       .order('trade_name'),
   ]);
 
@@ -386,6 +387,7 @@ export async function loadDeliveryMedicationOptions(): Promise<
       id: medication.id,
       label: `${medication.trade_name} ${medication.concentration}`,
       active_ingredient: medication.active_ingredient,
+      requires_prescription: medication.requires_prescription,
       available_quantity: available.quantity,
       batch_count: available.batches,
       batch_ids: available.ids,

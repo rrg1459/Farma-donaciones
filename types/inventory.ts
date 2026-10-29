@@ -73,6 +73,7 @@ export interface Movement {
   type: MovementType;
   quantity: number;
   destination_or_beneficiary: string | null;
+  prescription_delivered: boolean | null;
   registered_by: string | null;
   motive_or_observation: string | null;
   created_at: string;

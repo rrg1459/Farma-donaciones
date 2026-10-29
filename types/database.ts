@@ -36,6 +36,7 @@ export interface Database {
           p_quantity: number;
           p_destination_or_beneficiary: string;
           p_motive_or_observation?: string | null;
+          p_prescription_delivered?: boolean | null;
         };
         Returns: {
           batch_id: string;
