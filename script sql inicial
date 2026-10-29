@@ -99,7 +99,8 @@ SELECT
   b.current_quantity,
   l.location_code,
   l.zone,
-  m.requires_refrigeration
+  m.requires_refrigeration,
+  m.requires_prescription
 FROM batches b
 JOIN medications m ON b.medication_id = m.id
 JOIN locations l ON b.location_id = l.id
