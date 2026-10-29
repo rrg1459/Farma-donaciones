@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { KpiCard } from '../components/KpiCard';
-import { Pill, AlertTriangle, XCircle, HeartHandshake, Clock, Snowflake, MapPin } from 'lucide-react';
+import { Pill, AlertTriangle, XCircle, HeartHandshake, Clock, Snowflake, MapPin, FileText } from 'lucide-react';
 import { loadDashboardData } from '../../lib/inventoryData';
 import { useSupabaseData } from '../../lib/useSupabaseData';
 import { MedicationDelivery } from '../components/MedicationDelivery';
@@ -87,10 +87,24 @@ export default function DashboardPage() {
                         {item.trade_name} {item.concentration}
                       </div>
                       <div className="text-xs text-slate-500">Principio Activo: {item.active_ingredient}</div>
-                      {item.requires_refrigeration && (
-                        <span className="inline-flex items-center text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mt-1">
-                          <Snowflake className="w-2.5 h-2.5 mr-1" /> Refrigerado
-                        </span>
+                      {(item.requires_refrigeration || item.requires_prescription) && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {item.requires_prescription && (
+                            <span
+                              title="Este medicamento requiere receta médica"
+                              className="inline-flex items-center rounded-md border border-rose-300 bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-800 shadow-sm"
+                            >
+                              <FileText aria-hidden="true" className="mr-1 h-3 w-3" />
+                              <span className="sm:hidden">Req. Receta</span>
+                              <span className="hidden sm:inline">Requiere Receta</span>
+                            </span>
+                          )}
+                          {item.requires_refrigeration && (
+                            <span className="inline-flex items-center rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600">
+                              <Snowflake aria-hidden="true" className="mr-1 h-2.5 w-2.5" /> Refrigerado
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                     {/* <td className="px-6 py-4 font-mono text-xs text-slate-700">{item.batch_number}</td> */}
