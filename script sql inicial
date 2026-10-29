@@ -80,6 +80,7 @@ CREATE TABLE movements (
   type movement_type_enum NOT NULL,     -- Tipo de movimiento (entrada, salida, ajuste, descarte)
   quantity INT NOT NULL CHECK (quantity > 0), -- Cantidad que entra o sale
   destination_or_beneficiary TEXT,      -- Destino o beneficiario (ej. "Paciente Juan Pérez" o "Jornada Médica")
+  prescription_delivered BOOLEAN,       -- Si se entregó receta para un medicamento que la requiere
   registered_by UUID REFERENCES auth.users(id), -- Usuario de Supabase que registró la acción
   motive_or_observation TEXT,           -- Motivo u observación del movimiento
   created_at TIMESTAMPTZ DEFAULT NOW()
