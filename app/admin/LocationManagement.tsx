@@ -147,11 +147,26 @@ export default function LocationManagement({
                 {isEditing ? (
                   <div className="flex flex-col gap-2">
                     <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Editando Ubicación</p>
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Zona" value={editValue.zone} onChange={(event) => setEditingForm({ ...editValue, zone: event.target.value })} disabled={busy} />
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Estante o mueble" value={editValue.shelf_unit} onChange={(event) => setEditingForm({ ...editValue, shelf_unit: event.target.value })} disabled={busy} />
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nivel o casillero" value={editValue.tier_bin} onChange={(event) => setEditingForm({ ...editValue, tier_bin: event.target.value })} disabled={busy} />
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Código de ubicación" value={editValue.location_code} onChange={(event) => setEditingForm({ ...editValue, location_code: event.target.value })} disabled={busy} />
-                    <textarea className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Descripción" rows={2} value={editValue.description ?? ''} onChange={(event) => setEditingForm({ ...editValue, description: event.target.value })} disabled={busy} />
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Zona</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Zona" value={editValue.zone} onChange={(event) => setEditingForm({ ...editValue, zone: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Estante o mueble</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Estante o mueble" value={editValue.shelf_unit} onChange={(event) => setEditingForm({ ...editValue, shelf_unit: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Nivel o casillero</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nivel o casillero" value={editValue.tier_bin} onChange={(event) => setEditingForm({ ...editValue, tier_bin: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Código de ubicación</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Código de ubicación" value={editValue.location_code} onChange={(event) => setEditingForm({ ...editValue, location_code: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Descripción</label>
+                      <textarea className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Descripción" rows={2} value={editValue.description ?? ''} onChange={(event) => setEditingForm({ ...editValue, description: event.target.value })} disabled={busy} />
+                    </div>
                     <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2 dark:border-zinc-700/60">
                       <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200">Cancelar</button>
                       <button type="button" onClick={() => void save(location.id, editingForm)} disabled={busy} className="flex cursor-pointer items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{busy ? 'Guardando...' : 'Guardar Cambios'}</button>

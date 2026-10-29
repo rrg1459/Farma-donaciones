@@ -235,14 +235,26 @@ export default function MedicationManagement({
                 {isEditing ? (
                   <div className="flex flex-col gap-2">
                     <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Editando Medicamento</p>
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nombre comercial" value={editingForm.trade_name} onChange={(event) => setEditingForm({ ...editingForm, trade_name: event.target.value })} disabled={busy} />
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Principio activo" value={editingForm.active_ingredient} onChange={(event) => setEditingForm({ ...editingForm, active_ingredient: event.target.value })} disabled={busy} />
-                    <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Concentración" value={editingForm.concentration} onChange={(event) => setEditingForm({ ...editingForm, concentration: event.target.value })} disabled={busy} />
-                    <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Forma farmacéutica" value={editingForm.pharmaceutical_form} onChange={(event) => setEditingForm({ ...editingForm, pharmaceutical_form: event.target.value as PharmaceuticalForm })} disabled={busy}>
-                      {forms.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                    <label className="mr-4 inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={editingForm.requires_refrigeration} onChange={(event) => setEditingForm({ ...editingForm, requires_refrigeration: event.target.checked })} disabled={busy} /> Refrigeración</label>
-                    <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={editingForm.requires_prescription} onChange={(event) => setEditingForm({ ...editingForm, requires_prescription: event.target.checked })} disabled={busy} /> Receta</label>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Nombre comercial</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nombre comercial" value={editingForm.trade_name} onChange={(event) => setEditingForm({ ...editingForm, trade_name: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Principio activo</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Principio activo" value={editingForm.active_ingredient} onChange={(event) => setEditingForm({ ...editingForm, active_ingredient: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Concentración</label>
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Concentración" value={editingForm.concentration} onChange={(event) => setEditingForm({ ...editingForm, concentration: event.target.value })} disabled={busy} />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-500">Forma farmacéutica</label>
+                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Forma farmacéutica" value={editingForm.pharmaceutical_form} onChange={(event) => setEditingForm({ ...editingForm, pharmaceutical_form: event.target.value as PharmaceuticalForm })} disabled={busy}>
+                        {forms.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                      </select>
+                    </div>
+                    <label className="inline-flex items-center gap-2 text-[11px] font-medium text-zinc-500"><input type="checkbox" checked={editingForm.requires_refrigeration} onChange={(event) => setEditingForm({ ...editingForm, requires_refrigeration: event.target.checked })} disabled={busy} /> Requiere refrigeración</label>
+                    <label className="inline-flex items-center gap-2 text-[11px] font-medium text-zinc-500"><input type="checkbox" checked={editingForm.requires_prescription} onChange={(event) => setEditingForm({ ...editingForm, requires_prescription: event.target.checked })} disabled={busy} /> Requiere receta</label>
                     <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2 dark:border-zinc-700/60">
                       <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200">Cancelar</button>
                       <button type="button" onClick={() => void save(medication.id, editingForm)} disabled={busy} className="flex cursor-pointer items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{busy ? 'Guardando...' : 'Guardar Cambios'}</button>
