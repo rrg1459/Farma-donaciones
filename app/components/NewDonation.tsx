@@ -56,6 +56,11 @@ export function NewDonation({ onClose }: NewDonationProps) {
   const [requiresRefrigeration, setRequiresRefrigeration] = useState(false);
   const [requiresPrescription, setRequiresPrescription] = useState(false);
   const [locationId, setLocationId] = useState('');
+  const [locationZone, setLocationZone] = useState('');
+  const [locationShelfUnit, setLocationShelfUnit] = useState('');
+  const [locationTierBin, setLocationTierBin] = useState('');
+  const [locationCode, setLocationCode] = useState('');
+  const [locationDescription, setLocationDescription] = useState('');
   const [batchNumber, setBatchNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [quantity, setQuantity] = useState('1');
@@ -73,8 +78,16 @@ export function NewDonation({ onClose }: NewDonationProps) {
   const selectedQuantity = Number(quantity);
   const creatingDonor = donorChoice === 'new';
   const creatingMedication = medicationChoice === 'new';
+  const creatingLocation = locationId === 'new';
   const canSubmit =
-    Boolean(options?.locations.some((location) => location.id === locationId)) &&
+    (creatingLocation
+      ? Boolean(
+          locationZone.trim() &&
+            locationShelfUnit.trim() &&
+            locationTierBin.trim() &&
+            locationCode.trim(),
+        )
+      : Boolean(options?.locations.some((location) => location.id === locationId))) &&
     Boolean(batchNumber.trim()) &&
     Boolean(expirationDate) &&
     expirationDate >= new Date().toISOString().slice(0, 10) &&
@@ -136,7 +149,14 @@ export function NewDonation({ onClose }: NewDonationProps) {
         p_requires_prescription: creatingMedication
           ? requiresPrescription
           : selectedMedication?.requires_prescription ?? false,
-        p_location_id: locationId,
+        p_location_id: creatingLocation ? null : locationId,
+        p_location_zone: creatingLocation ? locationZone.trim() : null,
+        p_location_shelf_unit: creatingLocation ? locationShelfUnit.trim() : null,
+        p_location_tier_bin: creatingLocation ? locationTierBin.trim() : null,
+        p_location_code: creatingLocation ? locationCode.trim() : null,
+        p_location_description: creatingLocation
+          ? locationDescription.trim() || null
+          : null,
         p_batch_number: batchNumber.trim(),
         p_expiration_date: expirationDate,
         p_quantity: selectedQuantity,
@@ -317,7 +337,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                     {medication.trade_name} {medication.concentration}
                   </option>
                 ))}
-                <option value="new">Registrar medicamento nuevo</option>
+                <option value="new">Registrar nuevo medicamento</option>
               </select>
             </label>
 
@@ -426,8 +446,73 @@ export function NewDonation({ onClose }: NewDonationProps) {
                     {location.zone} · {location.location_code}
                   </option>
                 ))}
+                <option value="new">Registrar nueva ubicación</option>
               </select>
             </label>
+            {creatingLocation && (
+              <>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">Zona</span>
+                  <input
+                    required
+                    maxLength={100}
+                    value={locationZone}
+                    onChange={(event) => setLocationZone(event.target.value)}
+                    disabled={submitting}
+                    placeholder="Ej. Pasillo A o Refrigeración"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">Estante o mueble</span>
+                  <input
+                    required
+                    maxLength={100}
+                    value={locationShelfUnit}
+                    onChange={(event) => setLocationShelfUnit(event.target.value)}
+                    disabled={submitting}
+                    placeholder="Ej. Estante 3"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">Nivel o casillero</span>
+                  <input
+                    required
+                    maxLength={100}
+                    value={locationTierBin}
+                    onChange={(event) => setLocationTierBin(event.target.value)}
+                    disabled={submitting}
+                    placeholder="Ej. Nivel 2 o Caja B"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">Código de ubicación</span>
+                  <input
+                    required
+                    maxLength={100}
+                    value={locationCode}
+                    onChange={(event) => setLocationCode(event.target.value)}
+                    disabled={submitting}
+                    placeholder="Ej. PAS-A-EST3-N2"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5 sm:col-span-2">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Descripción <span className="font-normal text-slate-400">(opcional)</span>
+                  </span>
+                  <input
+                    maxLength={500}
+                    value={locationDescription}
+                    onChange={(event) => setLocationDescription(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+              </>
+            )}
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">Número de lote</span>
               <input
