@@ -79,7 +79,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
     supabase
       .from('view_inventory_fefo')
       .select(
-        'batch_id, trade_name, active_ingredient, concentration, batch_number, expiration_date, days_until_expiration, current_quantity, location_code, zone, requires_refrigeration',
+        'batch_id, trade_name, active_ingredient, concentration, batch_number, expiration_date, days_until_expiration, current_quantity, location_code, zone, requires_refrigeration, requires_prescription',
       )
       .order('expiration_date', { ascending: true }),
     supabase.from('batches').select('current_quantity, status'),
@@ -186,6 +186,7 @@ export async function loadInventoryRows(): Promise<{
       location_code: location.location_code,
       zone: location.zone,
       requires_refrigeration: medication.requires_refrigeration,
+      requires_prescription: medication.requires_prescription,
       status: batch.status,
     };
   });
