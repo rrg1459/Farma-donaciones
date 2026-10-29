@@ -11,8 +11,8 @@ RETURNS TABLE (
   quantity INTEGER
 )
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public, pg_temp
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   v_registered_by UUID := auth.uid();
