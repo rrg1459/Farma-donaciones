@@ -488,6 +488,7 @@ export const mockFEFOItems: BatchItemFEFO[] = mockBatches
       location_code: location.location_code,
       zone: location.zone,
       requires_refrigeration: medication.requires_refrigeration,
+      requires_prescription: medication.requires_prescription,
     };
   })
   .sort((first, second) =>
