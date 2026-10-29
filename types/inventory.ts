@@ -90,4 +90,5 @@ export interface BatchItemFEFO {
   location_code: string;
   zone: string;
   requires_refrigeration: boolean;
+  requires_prescription: boolean;
 }
