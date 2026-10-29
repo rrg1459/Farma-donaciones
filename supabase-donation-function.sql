@@ -13,6 +13,11 @@ CREATE OR REPLACE FUNCTION public.register_donation(
   p_requires_refrigeration BOOLEAN,
   p_requires_prescription BOOLEAN,
   p_location_id UUID,
+  p_location_zone TEXT,
+  p_location_shelf_unit TEXT,
+  p_location_tier_bin TEXT,
+  p_location_code TEXT,
+  p_location_description TEXT,
   p_batch_number TEXT,
   p_expiration_date DATE,
   p_quantity INTEGER,
@@ -25,13 +30,14 @@ RETURNS TABLE (
   status public.batch_status_enum
 )
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public, pg_temp
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   v_registered_by UUID := auth.uid();
   v_donor_id UUID;
   v_medication_id UUID;
+  v_location_id UUID;
   v_batch_id UUID;
   v_status public.batch_status_enum;
 BEGIN
@@ -52,8 +58,34 @@ BEGIN
     RAISE EXCEPTION 'No se pueden registrar medicamentos caducados como una donacion disponible.';
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM public.locations WHERE id = p_location_id) THEN
-    RAISE EXCEPTION 'La ubicacion seleccionada no existe.';
+  IF p_location_id IS NULL THEN
+    IF NULLIF(BTRIM(p_location_zone), '') IS NULL
+      OR NULLIF(BTRIM(p_location_shelf_unit), '') IS NULL
+      OR NULLIF(BTRIM(p_location_tier_bin), '') IS NULL
+      OR NULLIF(BTRIM(p_location_code), '') IS NULL THEN
+      RAISE EXCEPTION 'La zona, estante, nivel y codigo son obligatorios para una nueva ubicacion.';
+    END IF;
+
+    INSERT INTO public.locations (
+      zone,
+      shelf_unit,
+      tier_bin,
+      location_code,
+      description
+    )
+    VALUES (
+      BTRIM(p_location_zone),
+      BTRIM(p_location_shelf_unit),
+      BTRIM(p_location_tier_bin),
+      BTRIM(p_location_code),
+      NULLIF(BTRIM(p_location_description), '')
+    )
+    RETURNING id INTO v_location_id;
+  ELSE
+    IF NOT EXISTS (SELECT 1 FROM public.locations WHERE id = p_location_id) THEN
+      RAISE EXCEPTION 'La ubicacion seleccionada no existe.';
+    END IF;
+    v_location_id := p_location_id;
   END IF;
 
   IF p_donor_id IS NULL THEN
@@ -132,7 +164,7 @@ BEGIN
   VALUES (
     v_medication_id,
     v_donor_id,
-    p_location_id,
+    v_location_id,
     BTRIM(p_batch_number),
     p_expiration_date,
     p_quantity,
@@ -166,12 +198,14 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.register_donation(
   UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
-  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, DATE, INTEGER, TEXT
+  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, TEXT, TEXT, TEXT,
+  TEXT, TEXT, DATE, INTEGER, TEXT
 ) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.register_donation(
   UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
-  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, DATE, INTEGER, TEXT
+  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, TEXT, TEXT, TEXT,
+  TEXT, TEXT, DATE, INTEGER, TEXT
 ) FROM PUBLIC, anon;
 
 NOTIFY pgrst, 'reload schema';
