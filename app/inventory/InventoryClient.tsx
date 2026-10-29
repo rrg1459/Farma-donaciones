@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { FileText, Search, Snowflake } from 'lucide-react';
 import type { BatchStatus } from '../../types/inventory';
 import { loadInventoryRows } from '../../lib/inventoryData';
 import { useSupabaseData } from '../../lib/useSupabaseData';
@@ -87,13 +87,15 @@ export default function InventarioPage() {
             </p>
           )}
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[900px] text-left text-sm text-slate-600">
+            <table className="w-full min-w-[1200px] text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3">Medicamento</th>
                   <th className="w-[15%] px-3 py-3">Principio Activo</th>
                   <th className="px-6 py-3">Lote</th>
                   <th className="px-6 py-3">Ubicación</th>
+                  <th className="px-6 py-3">Refrigerado</th>
+                  <th className="px-6 py-3">Requiere receta</th>
                   <th className="px-6 py-3">Vencimiento</th>
                   <th className="px-6 py-3">Stock Disponible</th>
                   <th className="px-6 py-3">Estado</th>
@@ -102,39 +104,58 @@ export default function InventarioPage() {
               <tbody className="divide-y divide-slate-100">
                 {loading && (
                   <tr>
-                    <td className="px-6 py-6 text-center" colSpan={7}>
+                    <td className="px-6 py-6 text-center" colSpan={9}>
                       Cargando lotes desde Supabase...
                     </td>
                   </tr>
                 )}
                 {!loading && !error && filteredInventory.length === 0 && (
                   <tr>
-                    <td className="px-6 py-6 text-center" colSpan={7}>
+                    <td className="px-6 py-6 text-center" colSpan={9}>
                       No se encontraron lotes con esos filtros.
                     </td>
                   </tr>
                 )}
                 {filteredInventory.map((item) => {
                   // Lógica visual para la etiqueta de ubicación
+                  const isExpired = item.days_until_expiration < 0;
                   const locationStyle =
                     item.zone === 'Refrigeración'
                       ? 'bg-blue-50 text-blue-700 border-blue-200'
                       : 'bg-slate-100 text-slate-700 border-slate-200';
+                  const expirationTextStyle =
+                    isExpired
+                      ? 'text-red-600'
+                      : item.zone === 'Refrigeración'
+                        ? 'text-blue-600'
+                        : 'text-amber-600';
 
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 font-semibold text-slate-900">
+                      <td className={`px-6 py-4 font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                         {item.trade_name} {item.concentration}
                       </td>
-                      <td className="max-w-40 px-3 py-4">{item.active_ingredient}</td>
-                      <td className="whitespace-nowrap px-6 py-4 font-mono text-sm">{item.batch_number}</td>
+                      <td className={`max-w-40 px-3 py-4 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.active_ingredient}</td>
+                      <td className={`whitespace-nowrap px-6 py-4 font-mono text-sm ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span className={`whitespace-nowrap rounded border px-2 py-1 font-mono text-sm ${locationStyle}`}>
                           {item.location_code}
                         </span>
                       </td>
-                      <td className={`px-6 py-4 font-semibold ${item.zone === 'Refrigeración' ? 'text-blue-600' : 'text-amber-600'}`}>{item.expiration_date}</td>
-                      <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} unidades</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_refrigeration ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                          <Snowflake aria-hidden="true" className="h-3.5 w-3.5" />
+                          {item.requires_refrigeration ? 'Sí' : 'No'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_prescription ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                          <FileText aria-hidden="true" className="h-3.5 w-3.5" />
+                          {item.requires_prescription ? 'Sí' : 'No'}
+                        </span>
+                      </td>
+                      <td className={`px-6 py-4 font-semibold ${expirationTextStyle}`}>{item.expiration_date}</td>
+                      <td className={`px-6 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</td>
                       <td className="px-6 py-4">
                         {item.status ? statusLabels[item.status] : 'Sin estado'}
                       </td>
@@ -156,19 +177,26 @@ export default function InventarioPage() {
               </p>
             )}
             {!loading && filteredInventory.map((item) => {
+              const isExpired = item.days_until_expiration < 0;
               const locationStyle =
                 item.zone === 'Refrigeración'
                   ? 'bg-blue-50 text-blue-700 border-blue-200'
                   : 'bg-slate-100 text-slate-700 border-slate-200';
+              const expirationTextStyle =
+                isExpired
+                  ? 'text-red-600'
+                  : item.zone === 'Refrigeración'
+                    ? 'text-blue-600'
+                    : 'text-amber-600';
 
               return (
                 <article key={item.id} className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="break-words font-semibold text-slate-900">
+                      <h2 className={`break-words font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                         {item.trade_name} {item.concentration}
                       </h2>
-                      <p className="break-words text-sm text-slate-600">
+                      <p className={`break-words text-sm text-slate-600 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                         {item.active_ingredient}
                       </p>
                     </div>
@@ -179,17 +207,35 @@ export default function InventarioPage() {
                   <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                     <div>
                       <dt className="text-xs text-slate-500">Lote</dt>
-                      <dd className="break-all font-mono text-slate-800">{item.batch_number}</dd>
+                      <dd className={`break-all font-mono text-slate-800 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Vencimiento</dt>
-                      <dd className={`font-semibold ${item.zone === 'Refrigeración' ? 'text-blue-600' : 'text-amber-600'}`}>
+                      <dd className={`font-semibold ${expirationTextStyle}`}>
                         {item.expiration_date}
                       </dd>
                     </div>
                     <div>
+                      <dt className="text-xs text-slate-500">Refrigerado</dt>
+                      <dd>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_refrigeration ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                          <Snowflake aria-hidden="true" className="h-3.5 w-3.5" />
+                          {item.requires_refrigeration ? 'Sí' : 'No'}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500">Requiere receta</dt>
+                      <dd>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_prescription ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                          <FileText aria-hidden="true" className="h-3.5 w-3.5" />
+                          {item.requires_prescription ? 'Sí' : 'No'}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-xs text-slate-500">Stock disponible</dt>
-                      <dd className="font-bold text-slate-900">{item.current_quantity} unidades</dd>
+                      <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Estado</dt>
