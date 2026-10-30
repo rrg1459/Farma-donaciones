@@ -11,6 +11,20 @@ export default function DashboardPage() {
   const { data, error, loading } = useSupabaseData(loadDashboardData);
   const [deliveryBatchId, setDeliveryBatchId] = useState<string | null>(null);
 
+  if (loading) {
+    return (
+      <div
+        role="status"
+        className="flex min-h-[50vh] flex-col items-center justify-center gap-3"
+      >
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        <p className="text-center text-sm italic text-zinc-500 dark:text-zinc-400">
+          Procesando...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:space-y-6 sm:p-6">

@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { logout } from "../actions/actions";
 import PillsLogo from '../components/PillsLogo';
 import FaSignOutAlt from "../svg/FaSignOutAlt";
 
 export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
+  const [isNavigating, setIsNavigating] = useState(false);
 
   return (
     <>
@@ -13,7 +15,11 @@ export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
       <header className="sticky top-0 z-10 bg-primary p-3 text-white shadow-md sm:p-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
 
-          <Link href="/" className="flex min-w-0 items-center space-x-2 sm:space-x-3">
+          <Link
+            href="/dashboard"
+            onClick={() => setIsNavigating(true)}
+            className="flex min-w-0 items-center space-x-2 sm:space-x-3"
+          >
             <div className="shrink-0 rounded-xl bg-emerald-500 p-1 font-black text-slate-950">
               <PillsLogo size={32} />
             </div>
@@ -43,6 +49,17 @@ export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
           </div>
         </div>
       </header>
+      {isNavigating && (
+        <div
+          role="status"
+          className="flex flex-col items-center justify-center gap-3 border-b border-slate-200 bg-white py-6"
+        >
+          <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          <p className="text-center text-sm italic text-zinc-500">
+            Procesando...
+          </p>
+        </div>
+      )}
     </>
   );
 };

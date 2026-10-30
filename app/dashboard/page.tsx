@@ -1,15 +1,17 @@
 import { connection } from 'next/server';
+import { Suspense } from 'react';
 import { Header } from '../components/Header';
 import DashboardClient from './DashboardClient';
-
-export const instant = false;
+import { DashboardHeaderLoading } from './DashboardLoading';
 
 export default async function DashboardPage() {
   await connection();
 
   return (
     <>
-      <Header />
+      <Suspense fallback={<DashboardHeaderLoading />}>
+        <Header />
+      </Suspense>
       <DashboardClient />
     </>
   );
