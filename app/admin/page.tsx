@@ -1,59 +1,26 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { Suspense } from "react";
 import { createClient } from "../utils/supabase";
 import { createAdminClient } from "../utils/supabase-admin";
 import { initials } from "../utils/initials";
 import DashboardClient from "./DashboardClient";
 import { AdminHeader } from "./AdminHeader";
+import AdminDashboardShell from "./AdminDashboardShell";
 
 export const instant = false;
 
-export default async function AdminPage() {
-  await connection();
-
-  const supabase = await createClient();
+async function AdminDashboardData({ userRole }: { userRole: string }) {
   const supabaseAdmin = createAdminClient();
-
-  // 1. Verificar sesión de usuario
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    redirect("/");
-  }
-
-  // 2. Verificar rol en la base de datos
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, full_name")
-    .eq("id", user.id)
-    .single();
-
-  const userName = profile?.full_name?.trim().split(/\s+/).slice(0, 2).join(" ") || "Usuario";
-  const userInitials = initials(profile?.full_name || "U");
-  const userRole = profile?.role || "volunteer";
-  const hasAccess = userRole === "admin" || userRole === "superadmin";
-
-  if (!hasAccess) {
-    redirect("/");
-  }
-
-  // 3. OBTENER LOS USUARIOS DE AUTENTICACIÓN
   const { data: authData, error } = await supabaseAdmin.auth.admin.listUsers();
 
   if (error) {
     console.error("Error al listar usuarios de autenticación:", error.message);
   }
 
-  const { data: appSettings } = await supabase
-    .from('app_settings')
-    .select('key, value')
-    .in('key', ['min_age_member', 'min_age_leader', 'max_age_member', 'max_age_leader']);
-
   let authUsers = authData?.users || [];
 
-  // 4. FILTRAR SI EL USUARIO ES SOLO 'admin'
   if (userRole === "admin") {
-    // Un admin solo puede gestionar usuarios con rol 'volunteer'
-
     const { data: volunteerProfiles, error: volunteerProfilesError } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -64,12 +31,9 @@ export default async function AdminPage() {
       throw new Error("No se pudieron consultar los perfiles de voluntarios.");
     }
 
-    const allowedIds = new Set(volunteerProfiles?.map((p) => p.id) || []);
-
-    // Filtramos la lista de authUsers dejando solo los operadores
+    const allowedIds = new Set(volunteerProfiles?.map((profile) => profile.id) || []);
     authUsers = authUsers.filter((authUser) => allowedIds.has(authUser.id));
   } else if (userRole === "superadmin") {
-    // Traemos los IDs de los perfiles que son 'superadmin'
     const { data: excludedProfiles, error: excludedProfilesError } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -80,12 +44,8 @@ export default async function AdminPage() {
       throw new Error("No se pudieron consultar los perfiles de superadministradores.");
     }
 
-    // Creamos un Set con los IDs a excluir para que la búsqueda sea ultra rápida
-    const excludedIds = new Set(excludedProfiles?.map((p) => p.id) || []);
-
-    // Filtramos la lista de authUsers eliminando los que coincidan con esos IDs
+    const excludedIds = new Set(excludedProfiles?.map((profile) => profile.id) || []);
     authUsers = authUsers.filter((authUser) => !excludedIds.has(authUser.id));
-
   }
 
   const [medicationsResponse, locationsResponse, donorsResponse] =
@@ -106,16 +66,59 @@ export default async function AdminPage() {
   }
 
   return (
+    <DashboardClient
+      initialUsers={authUsers}
+      initialMedications={medicationsResponse.data ?? []}
+      initialLocations={locationsResponse.data ?? []}
+      initialDonors={donorsResponse.data ?? []}
+    />
+  );
+}
+
+function AdminDashboardLoading() {
+  return (
+    <div className="mx-auto max-w-6xl p-3 sm:p-6">
+      <div className="flex flex-col items-center justify-center gap-3 py-12">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+        <p className="text-center text-sm italic text-zinc-500 dark:text-zinc-400">
+          Procesando...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default async function AdminPage() {
+  await connection();
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", user.id)
+    .single();
+
+  const userInitials = initials(profile?.full_name || "U");
+  const userRole = profile?.role || "volunteer";
+  const hasAccess = userRole === "admin" || userRole === "superadmin";
+
+  if (!hasAccess) {
+    redirect("/");
+  }
+
+  return (
     <>
       <AdminHeader userInitials={userInitials} />
-      <DashboardClient
-        userName={userName}
-        initialUsers={authUsers}
-        initialMedications={medicationsResponse.data ?? []}
-        initialLocations={locationsResponse.data ?? []}
-        initialDonors={donorsResponse.data ?? []}
-        appSettings={appSettings ?? []}
-      />
+      <AdminDashboardShell>
+        <Suspense fallback={<AdminDashboardLoading />}>
+          <AdminDashboardData userRole={userRole} />
+        </Suspense>
+      </AdminDashboardShell>
     </>
   );
 }
