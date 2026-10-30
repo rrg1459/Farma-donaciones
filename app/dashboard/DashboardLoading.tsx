@@ -1,7 +1,12 @@
+import PillsLogo from "../components/PillsLogo";
+
 export function DashboardHeaderLoading() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-primary p-3 text-white shadow-md sm:p-4">
+            <div className="shrink-0 rounded-xl bg-emerald-500 p-1 font-black text-slate-950">
+              <PillsLogo size={32} />
+            </div>
         <div className="mx-auto flex h-10 max-w-7xl items-center">
           <span className="font-bold">FarmaDonaciones</span>
         </div>
