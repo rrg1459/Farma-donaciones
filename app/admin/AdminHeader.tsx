@@ -49,17 +49,6 @@ export const AdminHeader = ({ userInitials }: { userInitials: string }) => {
           </div>
         </div>
       </header>
-      {isNavigating && (
-        <div
-          role="status"
-          className="flex flex-col items-center justify-center gap-3 border-b border-slate-200 bg-white py-6"
-        >
-          <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          <p className="text-center text-sm italic text-zinc-500">
-            Procesando...
-          </p>
-        </div>
-      )}
     </>
   );
 };
