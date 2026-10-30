@@ -34,13 +34,13 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
       <header className="sticky top-0 z-10 bg-primary p-3 text-white shadow-md sm:p-4">
         <div className="mx-auto flex max-w-7xl flex-nowrap items-center justify-between gap-1 sm:gap-2">
 
-          <Link href="/" className="flex min-w-0 items-center space-x-2 sm:space-x-3">
+          <Link href="/dashboard" className="flex min-w-0 items-center space-x-3 sm:space-x-3">
             <div className="shrink-0 rounded-xl bg-emerald-500 p-1 font-black text-slate-950">
               <PillsLogo size={32} />
             </div>
             <div className="hidden min-w-0 lg:block">
-              <h1 className="whitespace-nowrap text-base font-bold leading-none lg:text-lg">FarmaDonaciones</h1>
-              <span className="text-xs text-slate-400">Almacén Central • Panel Operativo</span>
+              <h1 className="whitespace-nowrap text-base font-bold leading-none mb-1 lg:text-lg">FarmaDonaciones</h1>
+              <span className="block text-xs text-slate-400">Almacén Central • Panel Operativo</span>
             </div>
           </Link>
 
