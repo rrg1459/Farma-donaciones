@@ -67,7 +67,81 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="space-y-3 p-3 md:hidden">
+            {!loading && !error && data?.fefoItems.length === 0 && (
+              <p className="rounded-lg border border-slate-200 p-4 text-center text-sm text-slate-500">
+                No hay lotes disponibles en la vista FEFO.
+              </p>
+            )}
+            {!loading && !error && data?.fefoItems.map((item) => (
+              <article
+                key={item.batch_id}
+                className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div>
+                  <h3 className="font-semibold text-slate-900">
+                    {item.trade_name} {item.concentration}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Principio Activo: {item.active_ingredient}
+                  </p>
+                  {(item.requires_refrigeration || item.requires_prescription) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {item.requires_prescription && (
+                        <span className="inline-flex items-center rounded-md border border-rose-300 bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-800 shadow-sm">
+                          <FileText aria-hidden="true" className="mr-1 h-3 w-3" />
+                          Requiere Receta
+                        </span>
+                      )}
+                      {item.requires_refrigeration && (
+                        <span className="inline-flex items-center rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600">
+                          <Snowflake aria-hidden="true" className="mr-1 h-2.5 w-2.5" />
+                          Refrigerado
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 text-sm">
+                  <div>
+                    <dt className="text-xs text-slate-500">Lote</dt>
+                    <dd className="font-mono text-slate-700">{item.batch_number}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-slate-500">Ubicación</dt>
+                    <dd className="inline-flex items-center text-slate-700">
+                      <MapPin aria-hidden="true" className="mr-1 h-3 w-3 text-slate-400" />
+                      {item.location_code}
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-xs text-slate-500">Vencimiento</dt>
+                    <dd className="mt-1">
+                      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                        {item.days_until_expiration < 0
+                          ? `Caducado hace ${Math.abs(item.days_until_expiration)} días`
+                          : `Quedan ${item.days_until_expiration} días`} ({item.expiration_date})
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-xs text-slate-500">Stock</dt>
+                    <dd className="font-bold text-slate-900">{item.current_quantity} unidades</dd>
+                  </div>
+                </dl>
+
+                <button
+                  onClick={() => setDeliveryBatchId(item.batch_id)}
+                  className="w-full rounded-lg bg-dispense px-3 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+                >
+                  Dispensar
+                </button>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
                 <tr>
