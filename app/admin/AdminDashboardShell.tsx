@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useRef, useState, type ReactNode } from "react";
 import { HandHeart, MapPin, Pill, Users } from "lucide-react";
 
 type AdminSection = "users" | "medications" | "locations" | "donors";
@@ -49,6 +49,59 @@ export default function AdminDashboardShell({
   children: ReactNode;
 }) {
   const [section, setSection] = useState<AdminSection>("users");
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    const target = event.target;
+    if (!(target instanceof Element) || event.touches.length !== 1) {
+      touchStart.current = null;
+      return;
+    }
+
+    if (
+      target.closest(
+        'button, a, input, select, textarea, label, summary, [contenteditable="true"], [role="button"], [role="link"], [data-swipe-ignore]',
+      )
+    ) {
+      touchStart.current = null;
+      return;
+    }
+
+    let element: Element | null = target;
+    while (element && element !== event.currentTarget) {
+      const style = window.getComputedStyle(element);
+      if (
+        element.scrollWidth > element.clientWidth &&
+        (style.overflowX === "auto" || style.overflowX === "scroll")
+      ) {
+        touchStart.current = null;
+        return;
+      }
+      element = element.parentElement;
+    }
+
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    const start = touchStart.current;
+    touchStart.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) {
+      return;
+    }
+
+    const currentIndex = navItems.findIndex((item) => item.id === section);
+    const nextIndex = currentIndex + (deltaX < 0 ? 1 : -1);
+    if (nextIndex >= 0 && nextIndex < navItems.length) {
+      setSection(navItems[nextIndex].id);
+    }
+  }
 
   return (
     <AdminSectionContext.Provider value={section}>
@@ -81,7 +134,15 @@ export default function AdminDashboardShell({
             })}
           </div>
         </nav>
-        {children}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => {
+            touchStart.current = null;
+          }}
+        >
+          {children}
+        </div>
       </div>
     </AdminSectionContext.Provider>
   );

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { PlusCircle, ArrowUpRight, BarChart3, Boxes, MapPin, History } from 'lucide-react';
 import { logout } from "../actions/actions";
 import { MedicationDelivery } from './MedicationDelivery';
@@ -16,17 +16,88 @@ type HeaderClientProps = {
   userRole: string;
 };
 
+const navItems = [
+  { nameShort: 'Dash', nameLarge: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+  { nameShort: 'Stock', nameLarge: 'Inventario & Stock FEFO', href: '/inventory', icon: Boxes },
+  { nameShort: 'Mapa', nameLarge: 'Mapa del Almacén', href: '/map', icon: MapPin },
+  { nameShort: 'Movs.', nameLarge: 'Historial de Movimientos', href: '/movements', icon: History },
+];
+
 export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
   const [isDonationOpen, setIsDonationOpen] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-  const navItems = [
-    { nameShort: 'Dash', nameLarge: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { nameShort: 'Stock', nameLarge: 'Inventario & Stock FEFO', href: '/inventory', icon: Boxes },
-    { nameShort: 'Mapa', nameLarge: 'Mapa del Almacén', href: '/map', icon: MapPin },
-    { nameShort: 'Movs.', nameLarge: 'Historial de Movimientos', href: '/movements', icon: History },
-  ];
+  useEffect(() => {
+    if (isDeliveryOpen || isDonationOpen) return;
+
+    function handleTouchStart(event: TouchEvent) {
+      touchStart.current = null;
+      if (!window.matchMedia('(max-width: 639px)').matches || event.touches.length !== 1) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (
+        target.closest(
+          'header, nav, button, a, input, select, textarea, label, summary, [contenteditable="true"], [role="button"], [role="link"], [data-swipe-ignore]',
+        )
+      ) {
+        return;
+      }
+
+      let element: Element | null = target;
+      while (element) {
+        const style = window.getComputedStyle(element);
+        if (
+          element.scrollWidth > element.clientWidth &&
+          (style.overflowX === 'auto' || style.overflowX === 'scroll')
+        ) {
+          return;
+        }
+        element = element.parentElement;
+      }
+
+      const touch = event.touches[0];
+      touchStart.current = { x: touch.clientX, y: touch.clientY };
+    }
+
+    function handleTouchEnd(event: TouchEvent) {
+      const start = touchStart.current;
+      touchStart.current = null;
+      const touch = event.changedTouches[0];
+      if (!start || !touch) return;
+
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+      if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) {
+        return;
+      }
+
+      const currentIndex = navItems.findIndex((item) => item.href === pathname);
+      const nextIndex = currentIndex + (deltaX < 0 ? 1 : -1);
+      if (currentIndex >= 0 && nextIndex >= 0 && nextIndex < navItems.length) {
+        router.push(navItems[nextIndex].href);
+      }
+    }
+
+    function handleTouchCancel() {
+      touchStart.current = null;
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchCancel);
+    };
+  }, [isDeliveryOpen, isDonationOpen, pathname, router]);
 
   return (
     <>
