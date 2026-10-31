@@ -79,7 +79,7 @@ export default function InventarioPage() {
         {/* TABLA DE INVENTARIO COMPLETO */}
         <section
           aria-label="Inventario completo"
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+          className="md:overflow-hidden md:rounded-xl md:border md:border-slate-200 md:bg-white md:shadow-sm"
         >
           {error && (
             <p role="alert" className="border-b border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -165,7 +165,7 @@ export default function InventarioPage() {
               </tbody>
             </table>
           </div>
-          <div className="divide-y divide-slate-100 md:hidden">
+          <div className="space-y-3 md:hidden">
             {loading && (
               <p className="p-5 text-center text-sm text-slate-600">
                 Cargando lotes desde Supabase...
@@ -190,7 +190,7 @@ export default function InventarioPage() {
                     : 'text-amber-600';
 
               return (
-                <article key={item.id} className="space-y-3 p-4">
+                <article key={item.id} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className={`break-words font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
