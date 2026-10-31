@@ -73,16 +73,19 @@ export default function DashboardPage() {
                 No hay lotes disponibles en la vista FEFO.
               </p>
             )}
-            {!loading && !error && data?.fefoItems.map((item) => (
+            {!loading && !error && data?.fefoItems.map((item) => {
+              const isExpired = item.days_until_expiration < 0;
+
+              return (
               <article
                 key={item.batch_id}
                 className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
               >
                 <div>
-                  <h3 className="font-semibold text-slate-900">
+                  <h3 className={`font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                     {item.trade_name} {item.concentration}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className={`text-xs text-slate-500 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                     Principio Activo: {item.active_ingredient}
                   </p>
                   {(item.requires_refrigeration || item.requires_prescription) && (
@@ -106,7 +109,7 @@ export default function DashboardPage() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-slate-100 pt-3 text-sm">
                   <div>
                     <dt className="text-xs text-slate-500">Lote</dt>
-                    <dd className="font-mono text-slate-700">{item.batch_number}</dd>
+                    <dd className={`font-mono text-slate-700 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-slate-500">Ubicación</dt>
@@ -118,7 +121,7 @@ export default function DashboardPage() {
                   <div className="col-span-2">
                     <dt className="text-xs text-slate-500">Vencimiento</dt>
                     <dd className="mt-1">
-                      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-800'}`}>
                         {item.days_until_expiration < 0
                           ? `Caducado hace ${Math.abs(item.days_until_expiration)} días`
                           : `Quedan ${item.days_until_expiration} días`} ({item.expiration_date})
@@ -127,18 +130,20 @@ export default function DashboardPage() {
                   </div>
                   <div className="col-span-2">
                     <dt className="text-xs text-slate-500">Stock</dt>
-                    <dd className="font-bold text-slate-900">{item.current_quantity} unidades</dd>
+                    <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</dd>
                   </div>
                 </dl>
 
                 <button
                   onClick={() => setDeliveryBatchId(item.batch_id)}
-                  className="w-full rounded-lg bg-dispense px-3 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+                  disabled={item.days_until_expiration < 0}
+                  className="w-full rounded-lg bg-dispense px-3 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Dispensar
                 </button>
               </article>
-            ))}
+              );
+            })}
           </div>
 
           <div className="hidden overflow-x-auto md:block">
@@ -168,13 +173,16 @@ export default function DashboardPage() {
                     </td>
                   </tr>
                 )}
-                {!loading && !error && data?.fefoItems.map((item) => (
+                {!loading && !error && data?.fefoItems.map((item) => {
+                  const isExpired = item.days_until_expiration < 0;
+
+                  return (
                   <tr key={item.batch_id} className="hover:bg-slate-50/80 transition">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900">
+                      <div className={`font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                         {item.trade_name} {item.concentration}
                       </div>
-                      <div className="text-xs text-slate-500">Principio Activo: {item.active_ingredient}</div>
+                      <div className={`text-xs text-slate-500 ${isExpired ? 'line-through decoration-red-600' : ''}`}>Principio Activo: {item.active_ingredient}</div>
                       {(item.requires_refrigeration || item.requires_prescription) && (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {item.requires_prescription && (
@@ -196,30 +204,32 @@ export default function DashboardPage() {
                       )}
                     </td>
                     {/* <td className="px-6 py-4 font-mono text-xs text-slate-700">{item.batch_number}</td> */}
-                    <td className="whitespace-nowrap px-6 py-4 font-mono text-sm">{item.batch_number}</td>
+                    <td className={`whitespace-nowrap px-6 py-4 font-mono text-sm ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         <MapPin className="w-3 h-3 mr-1 text-slate-400" /> {item.location_code}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${isExpired ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-800'}`}>
                         {item.days_until_expiration < 0
                           ? `Caducado hace ${Math.abs(item.days_until_expiration)} días`
                           : `Quedan ${item.days_until_expiration} días`} ({item.expiration_date})
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{item.current_quantity} unidades</td>
+                    <td className={`px-6 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setDeliveryBatchId(item.batch_id)}
-                        className="text-xs bg-dispense hover:bg-purple-700 text-white font-semibold px-3 py-1.5 rounded-lg transition"
+                        disabled={item.days_until_expiration < 0}
+                        className="text-xs bg-dispense hover:bg-purple-700 text-white font-semibold px-3 py-1.5 rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Dispensar
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
