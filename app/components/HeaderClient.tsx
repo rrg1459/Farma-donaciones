@@ -105,15 +105,15 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
       <header className="sticky top-0 z-10 bg-primary p-3 text-white shadow-md sm:p-4">
         <div className="mx-auto flex max-w-7xl flex-nowrap items-center justify-between gap-1 sm:gap-2">
 
-          <Link href="/dashboard" className="flex min-w-0 items-center space-x-3 sm:space-x-3">
+          <div className="flex min-w-0 items-center space-x-3 sm:space-x-3">
             <div className="shrink-0 rounded-xl bg-emerald-500 p-1 font-black text-slate-950">
               <PillsLogo size={32} />
             </div>
             <div className="hidden min-w-0 lg:block">
               <h1 className="whitespace-nowrap text-base font-bold leading-none mb-1 lg:text-lg">FarmaDonaciones</h1>
-              <span className="block text-xs text-slate-400">Almacén Central • Panel Operativo</span>
+              <span className="block text-xs text-slate-400">Panel Operativo</span>
             </div>
-          </Link>
+          </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -139,6 +139,10 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
               </button>
             </div>
 
+            <div className="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-xs font-bold text-emerald-400 sm:flex">
+              {userName}
+            </div>
+
             {(userRole === 'admin' || userRole === 'superadmin') && (
               <Link
                 href="/admin"
@@ -149,10 +153,6 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
                 <FcSettings size={30} />
               </Link>
             )}
-
-            <div className="hidden h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-xs font-bold text-emerald-400 sm:flex">
-              {userName}
-            </div>
 
             <form action={logout} className="flex items-center">
               <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="my-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-gray-700 dark:text-zinc-200 dark:hover:bg-zinc-600">
