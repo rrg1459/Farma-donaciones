@@ -200,9 +200,12 @@ export default function InventarioPage() {
                         {item.active_ingredient}
                       </p>
                     </div>
-                    <span className={`shrink-0 rounded border px-2 py-1 text-xs font-mono ${locationStyle}`}>
-                      {item.location_code}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="text-xs text-slate-500">Ubicación</span>
+                      <span className={`rounded border px-2 py-1 text-xs font-mono ${locationStyle}`}>
+                        {item.location_code}
+                      </span>
+                    </div>
                   </div>
                   <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                     <div>
