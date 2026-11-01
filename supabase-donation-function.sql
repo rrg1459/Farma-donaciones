@@ -54,8 +54,8 @@ BEGIN
     RAISE EXCEPTION 'El numero de lote es obligatorio.';
   END IF;
 
-  IF p_expiration_date IS NULL OR p_expiration_date < CURRENT_DATE THEN
-    RAISE EXCEPTION 'No se pueden registrar medicamentos caducados como una donacion disponible.';
+  IF p_expiration_date IS NULL OR p_expiration_date < CURRENT_DATE + 7 THEN
+    RAISE EXCEPTION 'La fecha de caducidad debe ser al menos 7 dias a partir de hoy.';
   END IF;
 
   IF p_location_id IS NULL THEN

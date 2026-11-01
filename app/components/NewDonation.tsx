@@ -7,6 +7,13 @@ import {
   INVENTORY_UPDATED_EVENT,
   loadDonationFormOptions,
 } from '../../lib/inventoryData';
+import {
+  formatExpirationDate,
+  getMinimumExpirationDate,
+  isValidExpirationDate,
+  MIN_EXPIRATION_DAYS,
+  parseExpirationDate,
+} from '../../lib/batchValidation';
 import { useSupabaseData } from '../../lib/useSupabaseData';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 
@@ -34,47 +41,6 @@ const donorTypes = [
 
 function isPharmaceuticalForm(value: string): value is PharmaceuticalForm {
   return value in formLabels;
-}
-
-function getMinimumExpirationDate(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function parseExpirationDate(value: string): string | null {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-  if (!match) {
-    return null;
-  }
-
-  const [, dayText, monthText, yearText] = match;
-  const date = new Date(0);
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCFullYear(Number(yearText), Number(monthText) - 1, Number(dayText));
-
-  if (
-    Number(yearText) < 1 ||
-    date.getUTCFullYear() !== Number(yearText) ||
-    date.getUTCMonth() !== Number(monthText) - 1 ||
-    date.getUTCDate() !== Number(dayText)
-  ) {
-    return null;
-  }
-
-  return `${yearText}-${monthText}-${dayText}`;
-}
-
-function formatExpirationDate(value: string): string {
-  if (!value) {
-    return '';
-  }
-
-  const [year, month, day] = value.split('-');
-  return `${day}/${month}/${year}`;
 }
 
 export function NewDonation({ onClose }: NewDonationProps) {
@@ -134,7 +100,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
       : Boolean(options?.locations.some((location) => location.id === locationId))) &&
     Boolean(batchNumber.trim()) &&
     expirationDateISO !== null &&
-    expirationDateISO >= minimumExpirationDate &&
+    isValidExpirationDate(expirationDateISO) &&
     Number.isInteger(selectedQuantity) &&
     selectedQuantity > 0 &&
     (creatingDonor ? Boolean(donorName.trim()) : Boolean(selectedDonor)) &&
@@ -586,7 +552,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                   aria-invalid={
                     expirationDate.length > 0 &&
                     (expirationDateISO === null ||
-                      expirationDateISO < minimumExpirationDate)
+                      !isValidExpirationDate(expirationDateISO))
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
@@ -628,7 +594,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 id="expiration-date-hint"
                 className={`text-xs ${expirationDate.length > 0 &&
                     (expirationDateISO === null ||
-                      expirationDateISO < minimumExpirationDate)
+                      !isValidExpirationDate(expirationDateISO))
                     ? 'text-red-600'
                     : 'text-slate-500'
                   }`}
@@ -636,7 +602,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 {expirationDate.length > 0 &&
                   expirationDateISO === null
                   ? 'Ingresa una fecha válida en formato dd/mm/yyyy.'
-                  : 'La fecha debe ser al menos 7 días a partir de hoy.'}
+                  : `La fecha debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`}
               </span>
             </label>
             <label className="block space-y-1.5">

@@ -19,6 +19,7 @@ export interface DashboardData {
 
 export interface InventoryRow extends BatchItemFEFO {
   id: string;
+  initial_quantity: number;
   status: BatchStatus | null;
 }
 
@@ -131,7 +132,7 @@ export async function loadInventoryRows(): Promise<{
       supabase
         .from('batches')
         .select(
-          'id, medication_id, location_id, batch_number, expiration_date, current_quantity, status',
+          'id, medication_id, location_id, batch_number, expiration_date, initial_quantity, current_quantity, status',
         )
         .order('expiration_date', { ascending: true }),
       supabase.from('medications').select('*'),
@@ -178,6 +179,7 @@ export async function loadInventoryRows(): Promise<{
       concentration: medication.concentration,
       batch_number: batch.batch_number,
       expiration_date: batch.expiration_date,
+      initial_quantity: batch.initial_quantity,
       days_until_expiration: Math.floor(
         (new Date(`${batch.expiration_date}T00:00:00Z`).getTime() -
           new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`).getTime()) /

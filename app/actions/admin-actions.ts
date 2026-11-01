@@ -8,8 +8,15 @@ import type {
   Donor,
   Location,
   Medication,
+  BatchStatus,
   PharmaceuticalForm,
 } from '../../types/inventory'
+import {
+  getDateAfterDays,
+  getMinimumInitialQuantity,
+  isValidExpirationDate,
+  MIN_EXPIRATION_DAYS,
+} from '../../lib/batchValidation'
 
 const supabaseAdmin = createAdminClient();
 
@@ -33,6 +40,10 @@ export type DonorInput = Pick<
   Donor,
   'name_or_company' | 'contact_phone' | 'contact_email' | 'donor_type'
 >
+export type BatchEditInput = {
+  expiration_date: string
+  initial_quantity: number
+}
 
 const pharmaceuticalForms: PharmaceuticalForm[] = [
   'tablet_pill',
@@ -144,6 +155,74 @@ export async function adminDeleteMedication(
       .single()
     if (error) {
       throw new Error(getCatalogDatabaseError(error))
+    }
+  })
+}
+
+export async function adminUpdateBatch(
+  id: string,
+  input: BatchEditInput,
+): Promise<CatalogActionResult> {
+  return runCatalogAdminAction(async () => {
+    if (!isValidExpirationDate(input.expiration_date)) {
+      throw new Error(
+        `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
+      )
+    }
+    if (!Number.isSafeInteger(input.initial_quantity) || input.initial_quantity < 1) {
+      throw new Error('La cantidad inicial debe ser un entero mayor que cero.')
+    }
+
+    const { data: batch, error: batchError } = await supabaseAdmin
+      .from('batches')
+      .select('initial_quantity, current_quantity, expiration_date, status')
+      .eq('id', id)
+      .single()
+
+    if (batchError) {
+      throw new Error(getCatalogDatabaseError(batchError))
+    }
+
+    const minimumQuantity = getMinimumInitialQuantity(
+      batch.initial_quantity,
+      batch.current_quantity,
+    )
+    if (input.initial_quantity < minimumQuantity) {
+      throw new Error(
+        `La cantidad inicial no puede ser menor que ${minimumQuantity} (cantidad inicial registrada o stock actual).`,
+      )
+    }
+
+    const status: BatchStatus =
+      batch.status === 'quarantine'
+        ? 'quarantine'
+        : batch.current_quantity === 0
+          ? 'out_of_stock'
+          : input.expiration_date <= getDateAfterDays(60)
+            ? 'expiring_soon'
+            : 'available'
+    const update = supabaseAdmin
+      .from('batches')
+      .update({
+        expiration_date: input.expiration_date,
+        initial_quantity: input.initial_quantity,
+        status,
+      })
+      .eq('id', id)
+      .eq('initial_quantity', batch.initial_quantity)
+      .eq('current_quantity', batch.current_quantity)
+      .eq('expiration_date', batch.expiration_date)
+
+    const { data, error } =
+      batch.status === null
+        ? await update.is('status', null).select('id').maybeSingle()
+        : await update.eq('status', batch.status).select('id').maybeSingle()
+
+    if (error) {
+      throw new Error(getCatalogDatabaseError(error))
+    }
+    if (!data) {
+      throw new Error('El lote cambió mientras lo editabas. Recarga el inventario e inténtalo de nuevo.')
     }
   })
 }
