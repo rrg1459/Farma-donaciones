@@ -1,10 +1,14 @@
--- ATENCION: este seed elimina todos los datos existentes de estas cinco tablas.
+-- ATENCION: este seed elimina los datos existentes de las tablas de inventario,
+-- donantes, movimientos y ubicaciones indicadas abajo.
 -- Ejecutar solo en desarrollo o despues de respaldar los datos que quieras conservar.
+-- Requiere que supabase-items-extension.sql ya se haya ejecutado.
 BEGIN;
 
 -- Limpiar primero las tablas dependientes para respetar las claves foraneas.
 DELETE FROM public.movements;
 DELETE FROM public.batches;
+DELETE FROM public.inventory_item_batches;
+DELETE FROM public.inventory_items;
 DELETE FROM public.donors;
 DELETE FROM public.medications;
 DELETE FROM public.locations;
@@ -54,6 +58,23 @@ INSERT INTO public.batches (
   ('40000000-0000-4000-8000-000000000007', '20000000-0000-4000-8000-000000000007', '30000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000007', 'VHB-6208-R', '2027-05-20', 60, 50, 'available', 'Mantener refrigerada.', '2026-07-21T09:52:00Z'),
   ('40000000-0000-4000-8000-000000000008', '20000000-0000-4000-8000-000000000008', '30000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000008', 'ASP-2201-Q', '2026-10-01', 15, 15, 'expired', 'Retirar del inventario disponible.', '2026-01-20T09:00:00Z');
 
+INSERT INTO public.inventory_items (
+  id, name, item_type, unit, created_at
+) VALUES
+  ('70000000-0000-4000-8000-000000000001', 'Curitas', 'supply', 'caja', '2026-02-01T10:00:00Z'),
+  ('70000000-0000-4000-8000-000000000002', 'Tapabocas', 'supply', 'unidad', '2026-02-01T10:05:00Z'),
+  ('70000000-0000-4000-8000-000000000003', 'Tensiómetro', 'equipment', 'unidad', '2026-02-01T10:10:00Z'),
+  ('70000000-0000-4000-8000-000000000004', 'Silla de ruedas', 'equipment', 'unidad', '2026-02-01T10:15:00Z');
+
+INSERT INTO public.inventory_item_batches (
+  id, item_id, donor_id, location_id, batch_number, expiration_date,
+  initial_quantity, current_quantity, status, observations, created_at
+) VALUES
+  ('80000000-0000-4000-8000-000000000001', '70000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000003', 'CUR-2609-A', '2027-09-30', 120, 90, 'available', 'Lote de curitas con fecha de vencimiento.', '2026-09-01T10:00:00Z'),
+  ('80000000-0000-4000-8000-000000000002', '70000000-0000-4000-8000-000000000002', '30000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000006', NULL, NULL, 200, 160, 'available', 'Tapabocas sin lote ni fecha de caducidad registrada.', '2026-09-02T10:00:00Z'),
+  ('80000000-0000-4000-8000-000000000003', '70000000-0000-4000-8000-000000000003', '30000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000004', NULL, NULL, 5, 3, 'available', 'Equipos revisados y funcionales.', '2026-09-03T10:00:00Z'),
+  ('80000000-0000-4000-8000-000000000004', '70000000-0000-4000-8000-000000000004', '30000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000006', NULL, NULL, 3, 2, 'available', 'Sillas revisadas y listas para entrega.', '2026-09-04T10:00:00Z');
+
 -- registered_by queda NULL para no inventar UUIDs que no existan en auth.users.
 INSERT INTO public.movements (
   id, batch_id, type, quantity, destination_or_beneficiary,
@@ -74,5 +95,18 @@ INSERT INTO public.movements (
   ('60000000-0000-4000-8000-000000000013', '40000000-0000-4000-8000-000000000006', 'donation_entry', 100, NULL, NULL, 'Recepción de donación.', '2026-07-20T10:00:00Z'),
   ('60000000-0000-4000-8000-000000000014', '40000000-0000-4000-8000-000000000007', 'donation_exit', 10, 'Clínica Comunitaria Norte', NULL, NULL, '2026-10-13T09:30:00Z'),
   ('60000000-0000-4000-8000-000000000015', '40000000-0000-4000-8000-000000000008', 'donation_entry', 15, NULL, NULL, 'Recepción de donación.', '2026-01-20T09:00:00Z');
+
+INSERT INTO public.movements (
+  id, item_batch_id, type, quantity, destination_or_beneficiary,
+  registered_by, motive_or_observation, created_at
+) VALUES
+  ('60000000-0000-4000-8000-000000000016', '80000000-0000-4000-8000-000000000001', 'donation_entry', 120, NULL, NULL, 'Recepción de donación de curitas.', '2026-09-01T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000017', '80000000-0000-4000-8000-000000000001', 'donation_exit', 30, 'Jornada Médica Central', NULL, 'Entrega de curitas.', '2026-10-01T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000018', '80000000-0000-4000-8000-000000000002', 'donation_entry', 200, NULL, NULL, 'Recepción de tapabocas.', '2026-09-02T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000019', '80000000-0000-4000-8000-000000000002', 'donation_exit', 40, 'Centro Comunitario San José', NULL, 'Entrega de tapabocas.', '2026-10-02T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000020', '80000000-0000-4000-8000-000000000003', 'donation_entry', 5, NULL, NULL, 'Recepción de tensiómetros.', '2026-09-03T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000021', '80000000-0000-4000-8000-000000000003', 'donation_exit', 2, 'Clínica Comunitaria Norte', NULL, 'Entrega de tensiómetros en buen estado.', '2026-10-03T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000022', '80000000-0000-4000-8000-000000000004', 'donation_entry', 3, NULL, NULL, 'Recepción de sillas de ruedas.', '2026-09-04T10:00:00Z'),
+  ('60000000-0000-4000-8000-000000000023', '80000000-0000-4000-8000-000000000004', 'donation_exit', 1, 'Fundación Salud para Todos', NULL, 'Entrega de silla de ruedas revisada.', '2026-10-04T10:00:00Z');
 
 COMMIT;
