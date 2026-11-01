@@ -314,7 +314,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 }
               }}
               disabled={submitting}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:text-sm"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="medication">Medicamento</option>
               <option value="supply">Insumo médico</option>
@@ -329,7 +329,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 value={donorChoice}
                 onChange={(event) => setDonorChoice(event.target.value)}
                 disabled={loading || submitting}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 sm:text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
               >
                 <option value="">
                   {loading ? 'Cargando donantes...' : 'Selecciona un donante'}
@@ -366,7 +366,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                     value={donorType}
                     onChange={(event) => setDonorType(event.target.value)}
                     disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:text-sm"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {donorTypes.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -412,7 +412,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                   value={itemChoice}
                   onChange={(event) => setItemChoice(event.target.value)}
                   disabled={loading || submitting}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 sm:text-sm"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
                 >
                   <option value="">
                     {loading ? 'Cargando artículos...' : 'Selecciona un artículo'}
@@ -466,7 +466,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 value={medicationChoice}
                 onChange={(event) => setMedicationChoice(event.target.value)}
                 disabled={loading || submitting}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 sm:text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
               >
                 <option value="">
                   {loading ? 'Cargando medicamentos...' : 'Selecciona un medicamento'}
@@ -534,7 +534,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                       }
                     }}
                     disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:text-sm"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {Object.entries(formLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -578,7 +578,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 value={locationId}
                 onChange={(event) => setLocationId(event.target.value)}
                 disabled={loading || submitting}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 sm:text-sm"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
               >
                 <option value="">Selecciona una ubicación</option>
                 {options?.locations.map((location) => (
