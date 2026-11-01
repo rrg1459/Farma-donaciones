@@ -23,6 +23,6 @@ body {
 
 @media (max-width: 639px) {
   select option {
-    font-size: 0.25rem;
+    font-size: 8px;
   }
 }
