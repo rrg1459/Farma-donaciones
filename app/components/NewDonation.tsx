@@ -266,7 +266,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
         <div className="sticky top-0 flex items-start justify-between border-b border-slate-100 bg-white p-5">
           <div>
             <h2 id="donation-title" className="text-lg font-bold text-slate-900">
-              Registrar nuevax donación
+              Registrar nueva donación
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               Registra medicamentos, insumos o equipos médicos donados.
