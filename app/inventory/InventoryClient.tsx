@@ -126,7 +126,7 @@ export default function InventarioPage({
               aria-label="Filtrar por ubicación"
               value={selectedLocation}
               onChange={(event) => setSelectedLocation(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 md:w-auto"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 md:w-auto sm:text-sm"
             >
               <option value="">Todas las Ubicaciones</option>
               {data?.locations.map((location) => (
@@ -139,7 +139,7 @@ export default function InventarioPage({
               aria-label="Filtrar por estado"
               value={selectedStatus}
               onChange={(event) => setSelectedStatus(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 md:w-auto"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 md:w-auto sm:text-sm"
             >
               <option value="">Todos los estados</option>
               {Object.entries(statusLabels).map(([status, label]) => (

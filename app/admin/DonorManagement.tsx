@@ -106,7 +106,7 @@ export default function DonorManagement({
             </label>
             <label className="block space-y-1 text-sm font-medium">
               Tipo de donante
-              <select className={inputClass} value={form.donor_type} onChange={(event) => setForm({ ...form, donor_type: event.target.value })} disabled={busy}>
+              <select className={`${inputClass} text-xs sm:text-sm`} value={form.donor_type} onChange={(event) => setForm({ ...form, donor_type: event.target.value })} disabled={busy}>
                 {donorTypes.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
@@ -156,7 +156,7 @@ export default function DonorManagement({
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Tipo de donante</label>
-                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Tipo de donante" value={editingForm.donor_type} onChange={(event) => setEditingForm({ ...editingForm, donor_type: event.target.value })} disabled={busy}>
+                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-xs text-zinc-900 disabled:opacity-50 sm:text-sm" aria-label="Tipo de donante" value={editingForm.donor_type} onChange={(event) => setEditingForm({ ...editingForm, donor_type: event.target.value })} disabled={busy}>
                         {donorTypes.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </div>

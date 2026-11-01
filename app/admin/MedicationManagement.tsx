@@ -152,7 +152,7 @@ export default function MedicationManagement({
             <label className="block space-y-1 text-sm font-medium">
               Forma farmacéutica
               <select
-                className={inputClass}
+                className={`${inputClass} text-xs sm:text-sm`}
                 value={form.pharmaceutical_form}
                 onChange={(event) =>
                   setForm({
@@ -253,7 +253,7 @@ export default function MedicationManagement({
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Forma farmacéutica</label>
-                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Forma farmacéutica" value={editingForm.pharmaceutical_form} onChange={(event) => setEditingForm({ ...editingForm, pharmaceutical_form: event.target.value as PharmaceuticalForm })} disabled={busy}>
+                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-xs text-zinc-900 disabled:opacity-50 sm:text-sm" aria-label="Forma farmacéutica" value={editingForm.pharmaceutical_form} onChange={(event) => setEditingForm({ ...editingForm, pharmaceutical_form: event.target.value as PharmaceuticalForm })} disabled={busy}>
                         {forms.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </div>

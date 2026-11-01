@@ -178,7 +178,7 @@ export function MedicationDelivery({
                 setSuccessMessage(null);
               }}
               disabled={loading || !inventoryOptions?.length || submitting}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 sm:text-sm"
             >
               <option value="">
                 {loading ? 'Cargando artículos...' : 'Selecciona un artículo'}
