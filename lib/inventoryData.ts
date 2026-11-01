@@ -2,6 +2,8 @@ import type {
   BatchItemFEFO,
   BatchStatus,
   Donor,
+  InventoryItem,
+  InventoryItemType,
   Location,
   Medication,
   Movement,
@@ -17,17 +19,34 @@ export interface DashboardData {
   donatedUnits: number;
 }
 
-export interface InventoryRow extends BatchItemFEFO {
+export interface InventoryRow {
   id: string;
+  batch_id: string;
+  item_type: 'medication' | InventoryItemType;
+  trade_name: string;
+  active_ingredient: string;
+  concentration: string;
+  batch_number: string | null;
+  expiration_date: string | null;
+  days_until_expiration: number | null;
+  current_quantity: number;
+  location_code: string;
+  zone: string;
+  requires_refrigeration: boolean;
+  requires_prescription: boolean;
   initial_quantity: number;
   status: BatchStatus | null;
+  unit?: string;
 }
 
 export interface WarehouseBatch {
   id: string;
-  batch_number: string;
+  location_id: string;
+  batch_number: string | null;
   current_quantity: number;
-  medication: Medication;
+  medication: Medication | null;
+  item_name: string | null;
+  item_unit: string | null;
 }
 
 export interface WarehouseLocation extends Location {
@@ -35,16 +54,18 @@ export interface WarehouseLocation extends Location {
 }
 
 export interface MovementRow extends Movement {
-  batch_number: string;
-  medication: Medication;
+  batch_number: string | null;
+  medication: Medication | null;
+  item: InventoryItem | null;
   donor: Donor | null;
   registered_by_name: string | null;
 }
 
-export interface DeliveryMedicationOption {
+export interface DeliveryItemOption {
   id: string;
   label: string;
-  active_ingredient: string;
+  item_type: 'medication' | InventoryItemType;
+  active_ingredient: string | null;
   requires_prescription: boolean;
   available_quantity: number;
   batch_count: number;
@@ -54,6 +75,7 @@ export interface DeliveryMedicationOption {
 export interface DonationFormOptions {
   donors: Donor[];
   medications: Medication[];
+  inventoryItems: InventoryItem[];
   locations: Location[];
 }
 
@@ -77,7 +99,14 @@ function requireRows<T>(
 
 export async function loadDashboardData(): Promise<DashboardData> {
   const supabase = getSupabaseClient();
-  const [fefoResponse, batchesResponse, movementsResponse] = await Promise.all([
+  const [
+    fefoResponse,
+    batchesResponse,
+    itemBatchesResponse,
+    itemCatalogResponse,
+    locationsResponse,
+    movementsResponse,
+  ] = await Promise.all([
     supabase
       .from('view_inventory_fefo')
       .select(
@@ -85,6 +114,11 @@ export async function loadDashboardData(): Promise<DashboardData> {
       )
       .order('expiration_date', { ascending: true }),
     supabase.from('batches').select('current_quantity, status'),
+    supabase.from('inventory_item_batches').select(
+      'id, item_id, location_id, batch_number, expiration_date, current_quantity, status',
+    ),
+    supabase.from('inventory_items').select('id, name, item_type, unit'),
+    supabase.from('locations').select('id, location_code, zone'),
     supabase.from('movements').select('quantity, type'),
   ]);
 
@@ -103,11 +137,62 @@ export async function loadDashboardData(): Promise<DashboardData> {
     movementsResponse.error,
     'la tabla movements',
   );
+  const itemBatches = requireRows(
+    itemBatchesResponse.data,
+    itemBatchesResponse.error,
+    'la tabla inventory_item_batches',
+  );
+  const itemCatalog = requireRows(
+    itemCatalogResponse.data,
+    itemCatalogResponse.error,
+    'la tabla inventory_items',
+  );
+  const locations = requireRows(
+    locationsResponse.data,
+    locationsResponse.error,
+    'la tabla locations',
+  );
+
+  const itemById = new Map(itemCatalog.map((item) => [item.id, item]));
+  const locationById = new Map(locations.map((location) => [location.id, location]));
+  const today = new Date().toISOString().slice(0, 10);
+  const itemFefoRows = itemBatches.flatMap((batch) => {
+    if (!batch.expiration_date || batch.current_quantity <= 0) return [];
+    const item = itemById.get(batch.item_id);
+    const location = locationById.get(batch.location_id);
+    if (!item || !location) {
+      throw new Error(
+        `El registro de inventario ${batch.id} referencia un articulo o una ubicacion que no se pudo leer.`,
+      );
+    }
+    return [{
+      batch_id: batch.id,
+      trade_name: item.name,
+      active_ingredient: item.item_type === 'supply' ? 'Insumo médico' : 'Equipo médico',
+      concentration: item.unit,
+      batch_number: batch.batch_number ?? '',
+      expiration_date: batch.expiration_date,
+      days_until_expiration: Math.floor(
+        (new Date(`${batch.expiration_date}T00:00:00Z`).getTime() -
+          new Date(`${today}T00:00:00Z`).getTime()) / 86_400_000,
+      ),
+      current_quantity: batch.current_quantity,
+      location_code: location.location_code,
+      zone: location.zone,
+      requires_refrigeration: false,
+      requires_prescription: false,
+    }];
+  });
+  const allFefoItems = [...fefoItems, ...itemFefoRows].sort((a, b) =>
+    a.expiration_date.localeCompare(b.expiration_date),
+  );
 
   return {
-    fefoItems,
-    totalUnits: batches.reduce((total, batch) => total + batch.current_quantity, 0),
-    expiringUnits: fefoItems
+    fefoItems: allFefoItems,
+    totalUnits:
+      batches.reduce((total, batch) => total + batch.current_quantity, 0) +
+      itemBatches.reduce((total, batch) => total + batch.current_quantity, 0),
+    expiringUnits: allFefoItems
       .filter(
         (item) =>
           item.days_until_expiration >= 0 && item.days_until_expiration <= 60,
@@ -115,7 +200,14 @@ export async function loadDashboardData(): Promise<DashboardData> {
       .reduce((total, item) => total + item.current_quantity, 0),
     expiredUnits: batches
       .filter((batch) => batch.status === 'expired')
-      .reduce((total, batch) => total + batch.current_quantity, 0),
+      .reduce((total, batch) => total + batch.current_quantity, 0) +
+      itemBatches
+        .filter((batch) =>
+          batch.current_quantity > 0 &&
+          (batch.status === 'expired' ||
+            (batch.expiration_date !== null && batch.expiration_date < today)),
+        )
+        .reduce((total, batch) => total + batch.current_quantity, 0),
     donatedUnits: movements
       .filter((movement) => movement.type === 'donation_exit')
       .reduce((total, movement) => total + movement.quantity, 0),
@@ -127,7 +219,7 @@ export async function loadInventoryRows(): Promise<{
   locations: Location[];
 }> {
   const supabase = getSupabaseClient();
-  const [batchesResponse, medicationsResponse, locationsResponse] =
+  const [batchesResponse, medicationsResponse, locationsResponse, itemBatchesResponse, itemsResponse] =
     await Promise.all([
       supabase
         .from('batches')
@@ -137,6 +229,10 @@ export async function loadInventoryRows(): Promise<{
         .order('expiration_date', { ascending: true }),
       supabase.from('medications').select('*'),
       supabase.from('locations').select('*').order('location_code'),
+      supabase.from('inventory_item_batches').select(
+        'id, item_id, location_id, batch_number, expiration_date, initial_quantity, current_quantity, status',
+      ).order('expiration_date', { ascending: true, nullsFirst: false }),
+      supabase.from('inventory_items').select('*'),
     ]);
 
   const batches = requireRows(
@@ -154,6 +250,16 @@ export async function loadInventoryRows(): Promise<{
     locationsResponse.error,
     'la tabla locations',
   );
+  const itemBatches = requireRows(
+    itemBatchesResponse.data,
+    itemBatchesResponse.error,
+    'la tabla inventory_item_batches',
+  );
+  const items = requireRows(
+    itemsResponse.data,
+    itemsResponse.error,
+    'la tabla inventory_items',
+  );
   const medicationById = new Map(
     medications.map((medication) => [medication.id, medication]),
   );
@@ -161,7 +267,7 @@ export async function loadInventoryRows(): Promise<{
     locations.map((location) => [location.id, location]),
   );
 
-  const rows = batches.map((batch) => {
+  const medicationRows = batches.map((batch) => {
     const medication = medicationById.get(batch.medication_id);
     const location = locationById.get(batch.location_id);
 
@@ -174,6 +280,7 @@ export async function loadInventoryRows(): Promise<{
     return {
       id: batch.id,
       batch_id: batch.id,
+      item_type: 'medication' as const,
       trade_name: medication.trade_name,
       active_ingredient: medication.active_ingredient,
       concentration: medication.concentration,
@@ -194,12 +301,53 @@ export async function loadInventoryRows(): Promise<{
     };
   });
 
-  return { rows, locations };
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const locationRows = itemBatches.map((batch) => {
+    const item = itemById.get(batch.item_id);
+    const location = locationById.get(batch.location_id);
+    if (!item || !location) {
+      throw new Error(
+        `El registro de inventario ${batch.id} referencia un articulo o una ubicacion que no se pudo leer.`,
+      );
+    }
+
+    const daysUntilExpiration = batch.expiration_date
+      ? Math.floor(
+        (new Date(`${batch.expiration_date}T00:00:00Z`).getTime() -
+          new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`).getTime()) /
+          86_400_000,
+      )
+      : null;
+
+    return {
+      id: batch.id,
+      batch_id: batch.id,
+      item_type: item.item_type,
+      trade_name: item.name,
+      active_ingredient: '',
+      concentration: item.unit,
+      batch_number: batch.batch_number,
+      expiration_date: batch.expiration_date,
+      initial_quantity: batch.initial_quantity,
+      days_until_expiration: daysUntilExpiration,
+      current_quantity: batch.current_quantity,
+      location_code: location.location_code,
+      zone: location.zone,
+      requires_refrigeration: false,
+      requires_prescription: false,
+      status: daysUntilExpiration !== null && daysUntilExpiration < 0
+        ? 'expired' as const
+        : batch.status as BatchStatus,
+      unit: item.unit,
+    };
+  });
+
+  return { rows: [...medicationRows, ...locationRows], locations };
 }
 
 export async function loadWarehouseLocations(): Promise<WarehouseLocation[]> {
   const supabase = getSupabaseClient();
-  const [locationsResponse, batchesResponse, medicationsResponse] =
+  const [locationsResponse, batchesResponse, medicationsResponse, itemBatchesResponse, itemsResponse] =
     await Promise.all([
       supabase.from('locations').select('*').order('zone').order('location_code'),
       supabase
@@ -207,6 +355,11 @@ export async function loadWarehouseLocations(): Promise<WarehouseLocation[]> {
         .select('id, batch_number, current_quantity, medication_id, location_id')
         .gt('current_quantity', 0),
       supabase.from('medications').select('*'),
+      supabase
+        .from('inventory_item_batches')
+        .select('id, batch_number, current_quantity, item_id, location_id')
+        .gt('current_quantity', 0),
+      supabase.from('inventory_items').select('*'),
     ]);
 
   const locations = requireRows(
@@ -224,35 +377,68 @@ export async function loadWarehouseLocations(): Promise<WarehouseLocation[]> {
     medicationsResponse.error,
     'la tabla medications',
   );
+  const itemBatches = requireRows(
+    itemBatchesResponse.data,
+    itemBatchesResponse.error,
+    'la tabla inventory_item_batches',
+  );
+  const items = requireRows(
+    itemsResponse.data,
+    itemsResponse.error,
+    'la tabla inventory_items',
+  );
   const medicationById = new Map(
     medications.map((medication) => [medication.id, medication]),
   );
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const medicationWarehouseBatches: WarehouseBatch[] = batches.map((batch) => {
+    const medication = medicationById.get(batch.medication_id);
+    if (!medication) {
+      throw new Error(
+        `El lote ${batch.batch_number} referencia un medicamento que no se pudo leer.`,
+      );
+    }
+
+    return {
+      id: batch.id,
+      location_id: batch.location_id,
+      batch_number: batch.batch_number,
+      current_quantity: batch.current_quantity,
+      medication,
+      item_name: null,
+      item_unit: null,
+    };
+  });
+  const itemWarehouseBatches: WarehouseBatch[] = itemBatches.map((batch) => {
+    const item = itemById.get(batch.item_id);
+    if (!item) {
+      throw new Error(
+        `El registro de inventario ${batch.id} referencia un articulo que no se pudo leer.`,
+      );
+    }
+    return {
+      id: batch.id,
+      location_id: batch.location_id,
+      batch_number: batch.batch_number,
+      current_quantity: batch.current_quantity,
+      medication: null,
+      item_name: item.name,
+      item_unit: item.unit,
+    };
+  });
 
   return locations.map((location) => ({
     ...location,
-    batches: batches
-      .filter((batch) => batch.location_id === location.id)
-      .map((batch) => {
-        const medication = medicationById.get(batch.medication_id);
-        if (!medication) {
-          throw new Error(
-            `El lote ${batch.batch_number} referencia un medicamento que no se pudo leer.`,
-          );
-        }
-
-        return {
-          id: batch.id,
-          batch_number: batch.batch_number,
-          current_quantity: batch.current_quantity,
-          medication,
-        };
-      }),
+    batches: [
+      ...medicationWarehouseBatches.filter((batch) => batch.location_id === location.id),
+      ...itemWarehouseBatches.filter((batch) => batch.location_id === location.id),
+    ],
   }));
 }
 
 export async function loadMovementRows(): Promise<MovementRow[]> {
   const supabase = getSupabaseClient();
-  const [movementsResponse, batchesResponse, medicationsResponse, donorsResponse] =
+  const [movementsResponse, batchesResponse, medicationsResponse, donorsResponse, itemBatchesResponse, itemsResponse] =
     await Promise.all([
       supabase
         .from('movements')
@@ -263,6 +449,8 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
         .select('id, batch_number, medication_id, donor_id'),
       supabase.from('medications').select('*'),
       supabase.from('donors').select('*'),
+      supabase.from('inventory_item_batches').select('id, batch_number, item_id, donor_id'),
+      supabase.from('inventory_items').select('*'),
     ]);
 
   const movements = requireRows(
@@ -285,6 +473,16 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
     donorsResponse.error,
     'la tabla donors',
   );
+  const itemBatches = requireRows(
+    itemBatchesResponse.data,
+    itemBatchesResponse.error,
+    'la tabla inventory_item_batches',
+  );
+  const items = requireRows(
+    itemsResponse.data,
+    itemsResponse.error,
+    'la tabla inventory_items',
+  );
   const registrarIds = [
     ...new Set(
       movements
@@ -306,27 +504,36 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
     medications.map((medication) => [medication.id, medication]),
   );
   const donorById = new Map(donors.map((donor) => [donor.id, donor]));
+  const itemBatchById = new Map(itemBatches.map((batch) => [batch.id, batch]));
+  const itemById = new Map(items.map((item) => [item.id, item]));
   const registrarNameById = new Map(
     registrarNames.map(({ user_id, full_name }) => [user_id, full_name]),
   );
 
   return movements.map((movement) => {
-    const batch = batchById.get(movement.batch_id);
+    const batch = movement.batch_id ? batchById.get(movement.batch_id) : undefined;
     const medication = batch
       ? medicationById.get(batch.medication_id)
       : undefined;
+    const itemBatch = movement.item_batch_id
+      ? itemBatchById.get(movement.item_batch_id)
+      : undefined;
+    const item = itemBatch ? itemById.get(itemBatch.item_id) : undefined;
 
-    if (!batch || !medication) {
+    if ((!batch || !medication) && (!itemBatch || !item)) {
       throw new Error(
-        `El movimiento ${movement.id} referencia un lote o medicamento que no se pudo leer.`,
+        `El movimiento ${movement.id} referencia un lote o articulo que no se pudo leer.`,
       );
     }
 
     return {
       ...movement,
-      batch_number: batch.batch_number,
-      medication,
-      donor: batch.donor_id ? donorById.get(batch.donor_id) ?? null : null,
+      batch_number: batch?.batch_number ?? itemBatch?.batch_number ?? null,
+      medication: medication ?? null,
+      item: item ?? null,
+      donor: batch?.donor_id || itemBatch?.donor_id
+        ? donorById.get((batch?.donor_id ?? itemBatch?.donor_id)!) ?? null
+        : null,
       registered_by_name: movement.registered_by
         ? registrarNameById.get(movement.registered_by) ?? null
         : null,
@@ -334,12 +541,10 @@ export async function loadMovementRows(): Promise<MovementRow[]> {
   });
 }
 
-export async function loadDeliveryMedicationOptions(): Promise<
-  DeliveryMedicationOption[]
-> {
+export async function loadDeliveryInventoryOptions(): Promise<DeliveryItemOption[]> {
   const supabase = getSupabaseClient();
   const today = new Date().toISOString().slice(0, 10);
-  const [batchesResponse, medicationsResponse] = await Promise.all([
+  const [batchesResponse, medicationsResponse, itemBatchesResponse, itemsResponse] = await Promise.all([
     supabase
       .from('batches')
       .select('id, medication_id, current_quantity')
@@ -350,6 +555,13 @@ export async function loadDeliveryMedicationOptions(): Promise<
       .from('medications')
       .select('id, trade_name, active_ingredient, concentration, requires_prescription')
       .order('trade_name'),
+    supabase
+      .from('inventory_item_batches')
+      .select('id, item_id, current_quantity')
+      .gt('current_quantity', 0)
+      .or(`expiration_date.is.null,expiration_date.gte.${today}`)
+      .eq('status', 'available'),
+    supabase.from('inventory_items').select('*').order('name'),
   ]);
 
   const batches = requireRows(
@@ -361,6 +573,16 @@ export async function loadDeliveryMedicationOptions(): Promise<
     medicationsResponse.data,
     medicationsResponse.error,
     'la tabla medications',
+  );
+  const itemBatches = requireRows(
+    itemBatchesResponse.data,
+    itemBatchesResponse.error,
+    'los insumos y equipos disponibles para entrega',
+  );
+  const items = requireRows(
+    itemsResponse.data,
+    itemsResponse.error,
+    'la tabla inventory_items',
   );
   const availableByMedication = new Map<
     string,
@@ -379,7 +601,7 @@ export async function loadDeliveryMedicationOptions(): Promise<
     availableByMedication.set(batch.medication_id, current);
   });
 
-  return medications.flatMap((medication) => {
+  const medicationOptions = medications.flatMap((medication) => {
     const available = availableByMedication.get(medication.id);
     if (!available) {
       return [];
@@ -388,6 +610,7 @@ export async function loadDeliveryMedicationOptions(): Promise<
     return [{
       id: medication.id,
       label: `${medication.trade_name} ${medication.concentration}`,
+      item_type: 'medication' as const,
       active_ingredient: medication.active_ingredient,
       requires_prescription: medication.requires_prescription,
       available_quantity: available.quantity,
@@ -395,15 +618,40 @@ export async function loadDeliveryMedicationOptions(): Promise<
       batch_ids: available.ids,
     }];
   });
+
+  const availableByItem = new Map<string, { quantity: number; batches: number; ids: string[] }>();
+  itemBatches.forEach((batch) => {
+    const current = availableByItem.get(batch.item_id) ?? { quantity: 0, batches: 0, ids: [] };
+    current.quantity += batch.current_quantity;
+    current.batches += 1;
+    current.ids.push(batch.id);
+    availableByItem.set(batch.item_id, current);
+  });
+  const otherOptions = items.flatMap((item) => {
+    const available = availableByItem.get(item.id);
+    if (!available) return [];
+    return [{
+      id: item.id,
+      label: `${item.name} (${item.unit})`,
+      item_type: item.item_type,
+      active_ingredient: null,
+      requires_prescription: false,
+      available_quantity: available.quantity,
+      batch_count: available.batches,
+      batch_ids: available.ids,
+    }];
+  });
+  return [...medicationOptions, ...otherOptions];
 }
 
 export async function loadDonationFormOptions(): Promise<DonationFormOptions> {
   const supabase = getSupabaseClient();
-  const [donorsResponse, medicationsResponse, locationsResponse] =
+  const [donorsResponse, medicationsResponse, locationsResponse, inventoryItemsResponse] =
     await Promise.all([
       supabase.from('donors').select('*').order('name_or_company'),
       supabase.from('medications').select('*').order('trade_name'),
       supabase.from('locations').select('*').order('zone').order('location_code'),
+      supabase.from('inventory_items').select('*').order('name'),
     ]);
 
   return {
@@ -416,6 +664,11 @@ export async function loadDonationFormOptions(): Promise<DonationFormOptions> {
       medicationsResponse.data,
       medicationsResponse.error,
       'la tabla medications',
+    ),
+    inventoryItems: requireRows(
+      inventoryItemsResponse.data,
+      inventoryItemsResponse.error,
+      'la tabla inventory_items',
     ),
     locations: requireRows(
       locationsResponse.data,

@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { CalendarDays, CheckCircle2, LoaderCircle, X } from 'lucide-react';
 import type { PharmaceuticalForm } from '../../types/inventory';
+import type { InventoryItemType } from '../../types/inventory';
 import {
   INVENTORY_UPDATED_EVENT,
   loadDonationFormOptions,
@@ -51,6 +52,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
   } = useSupabaseData(loadDonationFormOptions);
   const [donorChoice, setDonorChoice] = useState('');
   const [medicationChoice, setMedicationChoice] = useState('');
+  const [entryType, setEntryType] = useState<'medication' | InventoryItemType>('medication');
+  const [itemChoice, setItemChoice] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [itemUnit, setItemUnit] = useState('unidad');
   const [donorName, setDonorName] = useState('');
   const [donorPhone, setDonorPhone] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
@@ -83,11 +88,13 @@ export function NewDonation({ onClose }: NewDonationProps) {
   const selectedMedication = options?.medications.find(
     (medication) => medication.id === medicationChoice,
   );
+  const selectedItem = options?.inventoryItems.find((item) => item.id === itemChoice);
   const selectedQuantity = Number(quantity);
   const expirationDateISO = parseExpirationDate(expirationDate);
   const minimumExpirationDate = getMinimumExpirationDate();
   const creatingDonor = donorChoice === 'new';
   const creatingMedication = medicationChoice === 'new';
+  const creatingItem = itemChoice === 'new';
   const creatingLocation = locationId === 'new';
   const canSubmit =
     (creatingLocation
@@ -98,19 +105,28 @@ export function NewDonation({ onClose }: NewDonationProps) {
         locationCode.trim(),
       )
       : Boolean(options?.locations.some((location) => location.id === locationId))) &&
-    Boolean(batchNumber.trim()) &&
-    expirationDateISO !== null &&
-    isValidExpirationDate(expirationDateISO) &&
+    (entryType === 'medication'
+      ? Boolean(batchNumber.trim()) &&
+        expirationDateISO !== null &&
+        isValidExpirationDate(expirationDateISO)
+      : (creatingItem
+          ? Boolean(itemName.trim() && itemUnit.trim())
+          : Boolean(selectedItem && selectedItem.item_type === entryType)) &&
+        (!expirationDate.trim() ||
+          (Boolean(batchNumber.trim()) &&
+            expirationDateISO !== null &&
+            isValidExpirationDate(expirationDateISO)))) &&
     Number.isInteger(selectedQuantity) &&
     selectedQuantity > 0 &&
     (creatingDonor ? Boolean(donorName.trim()) : Boolean(selectedDonor)) &&
-    (creatingMedication
-      ? Boolean(
-        tradeName.trim() &&
-        activeIngredient.trim() &&
-        concentration.trim(),
-      )
-      : Boolean(selectedMedication)) &&
+    (entryType !== 'medication' ||
+      (creatingMedication
+        ? Boolean(
+          tradeName.trim() &&
+          activeIngredient.trim() &&
+          concentration.trim(),
+        )
+        : Boolean(selectedMedication))) &&
     !submitting;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -124,7 +140,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
     setSuccessMessage(null);
 
     try {
-      const { data, error } = await getSupabaseClient().rpc('register_donation', {
+      const donorParams = {
         p_donor_id: creatingDonor ? null : selectedDonor?.id ?? null,
         p_donor_name: creatingDonor
           ? donorName.trim()
@@ -138,6 +154,29 @@ export function NewDonation({ onClose }: NewDonationProps) {
         p_donor_type: creatingDonor
           ? donorType
           : selectedDonor?.donor_type ?? 'individual',
+      };
+      const locationParams = {
+        p_location_id: creatingLocation ? null : locationId,
+        p_location_zone: creatingLocation ? locationZone.trim() : null,
+        p_location_shelf_unit: creatingLocation ? locationShelfUnit.trim() : null,
+        p_location_tier_bin: creatingLocation ? locationTierBin.trim() : null,
+        p_location_code: creatingLocation ? locationCode.trim() : null,
+        p_location_description: creatingLocation
+          ? locationDescription.trim() || null
+          : null,
+        p_quantity: selectedQuantity,
+        p_observations: observations.trim() || null,
+      };
+      let donationQuantity: number;
+      let donatedItemName: string;
+      let donatedBatch: string | null = null;
+
+      if (entryType === 'medication') {
+        if (!expirationDateISO) {
+          throw new Error('La fecha de caducidad del medicamento es obligatoria.');
+        }
+        const { data, error } = await getSupabaseClient().rpc('register_donation', {
+          ...donorParams,
         p_medication_id: creatingMedication
           ? null
           : selectedMedication?.id ?? null,
@@ -159,30 +198,43 @@ export function NewDonation({ onClose }: NewDonationProps) {
         p_requires_prescription: creatingMedication
           ? requiresPrescription
           : selectedMedication?.requires_prescription ?? false,
-        p_location_id: creatingLocation ? null : locationId,
-        p_location_zone: creatingLocation ? locationZone.trim() : null,
-        p_location_shelf_unit: creatingLocation ? locationShelfUnit.trim() : null,
-        p_location_tier_bin: creatingLocation ? locationTierBin.trim() : null,
-        p_location_code: creatingLocation ? locationCode.trim() : null,
-        p_location_description: creatingLocation
-          ? locationDescription.trim() || null
-          : null,
+        ...locationParams,
         p_batch_number: batchNumber.trim(),
         p_expiration_date: expirationDateISO,
-        p_quantity: selectedQuantity,
-        p_observations: observations.trim() || null,
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-      if (!data || data.length === 0) {
-        throw new Error('Supabase no confirmó el registro de la donación.');
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+          throw new Error('Supabase no confirmó el registro de la donación.');
+        }
+        donationQuantity = data[0].quantity;
+        donatedItemName = `${selectedMedication?.trade_name ?? tradeName} ${selectedMedication?.concentration ?? concentration}`;
+        donatedBatch = data[0].batch_number;
+      } else {
+        const { data, error } = await getSupabaseClient().rpc(
+          'register_inventory_item_donation',
+          {
+            ...donorParams,
+            p_item_id: creatingItem ? null : selectedItem?.id ?? null,
+            p_item_name: creatingItem ? itemName.trim() : selectedItem?.name ?? '',
+            p_item_type: entryType,
+            p_unit: creatingItem ? itemUnit.trim() : selectedItem?.unit ?? 'unidad',
+            ...locationParams,
+            p_batch_number: batchNumber.trim() || null,
+            p_expiration_date: entryType === 'supply' ? expirationDateISO : null,
+          },
+        );
+        if (error) throw new Error(error.message);
+        if (!data || data.length === 0) {
+          throw new Error('Supabase no confirmó el registro de la donación.');
+        }
+        donationQuantity = data[0].quantity;
+        donatedItemName = data[0].item_name;
+        donatedBatch = batchNumber.trim() || null;
       }
 
-      const donation = data[0];
       setSuccessMessage(
-        `Donación registrada: ${donation.quantity} unidades del lote ${donation.batch_number}.`,
+        `Donación registrada: ${donationQuantity} ${entryType === 'medication' ? 'unidades' : creatingItem ? itemUnit.trim() : selectedItem?.unit} de ${donatedItemName}${donatedBatch ? `, lote ${donatedBatch}` : ''}.`,
       );
       window.dispatchEvent(new Event(INVENTORY_UPDATED_EVENT));
     } catch (error: unknown) {
@@ -217,7 +269,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
               Registrar nueva donación
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Registra el donante, medicamento, lote y ubicación de recepción.
+              Registra medicamentos, insumos o equipos médicos donados.
             </p>
           </div>
           <button
@@ -248,6 +300,27 @@ export function NewDonation({ onClose }: NewDonationProps) {
               <span>{successMessage}</span>
             </p>
           )}
+
+          <label className="block space-y-1.5">
+            <span className="text-sm font-semibold text-slate-700">Tipo de artículo</span>
+            <select
+              value={entryType}
+              onChange={(event) => {
+                if (event.target.value === 'medication' || event.target.value === 'supply' || event.target.value === 'equipment') {
+                  setEntryType(event.target.value);
+                  setItemChoice('');
+                  setBatchNumber('');
+                  setExpirationDate('');
+                }
+              }}
+              disabled={submitting}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="medication">Medicamento</option>
+              <option value="supply">Insumo médico</option>
+              <option value="equipment">Equipo médico reutilizable</option>
+            </select>
+          </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
@@ -329,7 +402,63 @@ export function NewDonation({ onClose }: NewDonationProps) {
               </>
             )}
           </div>
+          {entryType !== 'medication' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <span className="text-sm font-semibold text-slate-700">
+                  {entryType === 'supply' ? 'Insumo médico' : 'Equipo médico'}
+                </span>
+                <select
+                  value={itemChoice}
+                  onChange={(event) => setItemChoice(event.target.value)}
+                  disabled={loading || submitting}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+                >
+                  <option value="">
+                    {loading ? 'Cargando artículos...' : 'Selecciona un artículo'}
+                  </option>
+                  {options?.inventoryItems
+                    .filter((item) => item.item_type === entryType)
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} ({item.unit})
+                      </option>
+                    ))}
+                  <option value="new">Registrar nuevo artículo</option>
+                </select>
+              </label>
+              {creatingItem && (
+                <>
+                  <label className="block space-y-1.5">
+                    <span className="text-sm font-semibold text-slate-700">Nombre del artículo</span>
+                    <input
+                      required
+                      maxLength={200}
+                      value={itemName}
+                      onChange={(event) => setItemName(event.target.value)}
+                      placeholder={entryType === 'supply' ? 'Ej. Curitas, tapabocas' : 'Ej. Tensiómetro, silla de ruedas'}
+                      disabled={submitting}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className="text-sm font-semibold text-slate-700">Unidad de medida</span>
+                    <input
+                      required
+                      maxLength={40}
+                      value={itemUnit}
+                      onChange={(event) => setItemUnit(event.target.value)}
+                      placeholder="unidad, caja, paquete..."
+                      disabled={submitting}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+          )}
 
+          {entryType === 'medication' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">Medicamento</span>
@@ -439,6 +568,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
               </>
             )}
           </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
@@ -523,24 +653,27 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 </label>
               </>
             )}
+            {(entryType === 'medication' || entryType === 'supply') && (
+            <>
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">Número de lote</span>
               <input
-                required
+                required={entryType === 'medication'}
                 maxLength={100}
                 value={batchNumber}
                 onChange={(event) => setBatchNumber(event.target.value)}
                 disabled={submitting}
+                placeholder={entryType === 'supply' ? 'Opcional si no aplica' : undefined}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </label>
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">
-                Fecha de caducidad
+                Fecha de caducidad {entryType === 'supply' && <span className="font-normal text-slate-400">(opcional)</span>}
               </span>
               <span className="relative block">
                 <input
-                  required
+                  required={entryType === 'medication'}
                   type="text"
                   inputMode="numeric"
                   placeholder="dd/mm/yyyy"
@@ -602,12 +735,23 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 {expirationDate.length > 0 &&
                   expirationDateISO === null
                   ? 'Ingresa una fecha válida en formato dd/mm/yyyy.'
-                  : `La fecha debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`}
+                  : expirationDate.length > 0
+                    ? `La fecha debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`
+                    : entryType === 'medication'
+                      ? `La fecha debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`
+                      : 'Si el artículo tiene vencimiento, registra también su lote.'}
               </span>
             </label>
+            </>
+            )}
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">
                 Cantidad recibida
+                {entryType !== 'medication' && (
+                  <span className="font-normal text-slate-500">
+                    {' '}({creatingItem ? itemUnit || 'unidad' : selectedItem?.unit ?? 'unidad'})
+                  </span>
+                )}
               </span>
               <input
                 required

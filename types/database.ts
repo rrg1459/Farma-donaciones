@@ -2,6 +2,8 @@ import type {
   Batch,
   BatchItemFEFO,
   Donor,
+  InventoryItem,
+  InventoryItemBatch,
   Location,
   Medication,
   Movement,
@@ -22,6 +24,8 @@ export interface Database {
       donors: TableDefinition<Donor>;
       batches: TableDefinition<Batch>;
       movements: TableDefinition<Movement>;
+      inventory_items: TableDefinition<InventoryItem>;
+      inventory_item_batches: TableDefinition<InventoryItemBatch>;
     };
     Views: {
       view_inventory_fefo: {
@@ -41,6 +45,19 @@ export interface Database {
         Returns: {
           batch_id: string;
           batch_number: string;
+          quantity: number;
+        }[];
+      };
+      deliver_inventory_item: {
+        Args: {
+          p_item_id: string;
+          p_quantity: number;
+          p_destination_or_beneficiary: string;
+          p_motive_or_observation?: string | null;
+        };
+        Returns: {
+          item_batch_id: string;
+          batch_number: string | null;
           quantity: number;
         }[];
       };
@@ -74,6 +91,34 @@ export interface Database {
           batch_number: string;
           quantity: number;
           status: NonNullable<Batch['status']>;
+        }[];
+      };
+      register_inventory_item_donation: {
+        Args: {
+          p_donor_id: string | null;
+          p_donor_name: string;
+          p_donor_phone: string | null;
+          p_donor_email: string | null;
+          p_donor_type: string;
+          p_item_id: string | null;
+          p_item_name: string;
+          p_item_type: 'supply' | 'equipment';
+          p_unit: string;
+          p_location_id: string | null;
+          p_location_zone: string | null;
+          p_location_shelf_unit: string | null;
+          p_location_tier_bin: string | null;
+          p_location_code: string | null;
+          p_location_description: string | null;
+          p_batch_number: string | null;
+          p_expiration_date: string | null;
+          p_quantity: number;
+          p_observations: string | null;
+        };
+        Returns: {
+          item_batch_id: string;
+          item_name: string;
+          quantity: number;
         }[];
       };
       get_movement_registrar_emails: {

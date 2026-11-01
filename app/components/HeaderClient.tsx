@@ -130,12 +130,12 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
               <button
                 type="button"
                 onClick={() => setIsDeliveryOpen(true)}
-                aria-label="Entregar Medicamento"
-                title="Entregar Medicamento"
+                aria-label="Entregar Artículo"
+                title="Entregar Artículo"
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-dispense font-bold text-white transition hover:bg-purple-700 sm:w-auto sm:space-x-2 sm:px-4 sm:py-2 sm:text-sm"
               >
                 <ArrowUpRight className="w-4 h-4" />
-                <span className="hidden sm:inline">Entregar Medicamento</span>
+                <span className="hidden sm:inline">Entregar Artículo</span>
               </button>
             </div>
 

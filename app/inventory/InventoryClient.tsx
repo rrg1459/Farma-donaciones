@@ -53,14 +53,14 @@ export default function InventarioPage({
   const filteredInventory = inventory.filter((item) =>
     (item.trade_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.active_ingredient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.batch_number.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      item.batch_number?.toLowerCase().includes(searchTerm.toLowerCase())) &&
     (!selectedLocation || item.location_code === selectedLocation) &&
     (!selectedStatus || item.status === selectedStatus)
   );
 
   function startEditingBatch(batch: InventoryRow) {
     setEditingBatch(batch);
-    setEditExpirationDate(batch.expiration_date);
+    setEditExpirationDate(batch.expiration_date ?? '');
     setEditInitialQuantity(String(batch.initial_quantity));
     setEditError(null);
   }
@@ -117,7 +117,7 @@ export default function InventarioPage({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por medicamento, principio activo o número de lote..."
+              placeholder="Buscar por artículo, principio activo o lote..."
               className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
@@ -161,8 +161,8 @@ export default function InventarioPage({
               {error}
             </p>
           )}
-          <div className="hidden xl:block">
-            <table className="w-full table-fixed text-left text-xs text-slate-600">
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="w-full min-w-[1080px] table-fixed text-left text-xs text-slate-600">
               <colgroup>
                 <col className="w-[15%]" />
                 <col className="w-[13%]" />
@@ -177,8 +177,8 @@ export default function InventarioPage({
               </colgroup>
               <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-medium border-b border-slate-200">
                 <tr>
-                  <th className="px-2 py-3">Medicamento</th>
-                  <th className="px-2 py-3">Principio Activo</th>
+                  <th className="px-2 py-3">Artículo</th>
+                  <th className="px-2 py-3">Tipo / Principio activo</th>
                   <th className="px-2 py-3">Lote</th>
                   <th className="px-2 py-3">Ubicación</th>
                   <th className="px-2 py-3">Refrigerado</th>
@@ -195,7 +195,7 @@ export default function InventarioPage({
                 {loading && (
                   <tr>
                     <td className="px-2 py-6 text-center" colSpan={canEditBatches ? 10 : 9}>
-                      Cargando lotes desde Supabase...
+                      Cargando inventario desde Supabase...
                     </td>
                   </tr>
                 )}
@@ -208,7 +208,7 @@ export default function InventarioPage({
                 )}
                 {filteredInventory.map((item) => {
                   // Lógica visual para la etiqueta de ubicación
-                  const isExpired = item.days_until_expiration < 0;
+                  const isExpired = item.days_until_expiration !== null && item.days_until_expiration < 0;
                   const locationStyle =
                     item.zone === 'Refrigeración'
                       ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -225,8 +225,12 @@ export default function InventarioPage({
                       <td className={`break-words px-2 py-4 font-semibold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
                         {item.trade_name} {item.concentration}
                       </td>
-                      <td className={`break-words px-2 py-4 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.active_ingredient}</td>
-                      <td className={`break-all px-2 py-4 font-mono ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</td>
+                      <td className={`break-words px-2 py-4 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
+                        {item.item_type === 'medication'
+                          ? item.active_ingredient
+                          : item.item_type === 'supply' ? 'Insumo médico' : 'Equipo médico'}
+                      </td>
+                      <td className={`break-all px-2 py-4 font-mono ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number ?? '—'}</td>
                       <td className="break-all px-2 py-4">
                         <span className={`rounded border px-1 py-1 font-mono ${locationStyle}`}>
                           {item.location_code}
@@ -235,30 +239,34 @@ export default function InventarioPage({
                       <td className="px-2 py-4">
                         <span className={`inline-flex flex-wrap items-center gap-1 rounded-full border px-1.5 py-1 font-semibold ${item.requires_refrigeration ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                           <Snowflake aria-hidden="true" className="h-3.5 w-3.5" />
-                          {item.requires_refrigeration ? 'Sí' : 'No'}
+                          {item.item_type !== 'medication'
+                            ? 'No aplica'
+                            : item.requires_refrigeration ? 'Sí' : 'No'}
                         </span>
                       </td>
                       <td className="px-2 py-4">
                         <span className={`inline-flex flex-wrap items-center gap-1 rounded-full border px-1.5 py-1 font-semibold ${item.requires_prescription ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                           <FileText aria-hidden="true" className="h-3.5 w-3.5" />
-                          {item.requires_prescription ? 'Sí' : 'No'}
+                          {item.item_type !== 'medication'
+                            ? 'No aplica'
+                            : item.requires_prescription ? 'Sí' : 'No'}
                         </span>
                       </td>
-                      <td className={`break-words px-2 py-4 font-semibold ${expirationTextStyle}`}>{item.expiration_date}</td>
-                      <td className={`break-words px-2 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</td>
+                      <td className={`break-words px-2 py-4 font-semibold ${expirationTextStyle}`}>{item.expiration_date ?? 'No aplica'}</td>
+                      <td className={`break-words px-2 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? 'unidades'}</td>
                       <td className="break-words px-2 py-4">
                         {item.status ? statusLabels[item.status] : 'Sin estado'}
                       </td>
                       {canEditBatches && (
                         <td className="px-2 py-4">
-                          <button
+                          {item.item_type === 'medication' && <button
                             type="button"
                             onClick={() => startEditingBatch(item)}
-                            aria-label={`Editar lote ${item.batch_number}`}
+                            aria-label={`Editar lote ${item.batch_number ?? ''}`}
                             className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                           >
                             Editar
-                          </button>
+                          </button>}
                         </td>
                       )}
                     </tr>
@@ -267,7 +275,7 @@ export default function InventarioPage({
               </tbody>
             </table>
           </div>
-          <div className="space-y-3 xl:hidden">
+          <div className="space-y-3 lg:hidden">
             {loading && (
               <p className="p-5 text-center text-sm text-slate-600">
                 Cargando lotes desde Supabase...
@@ -279,7 +287,7 @@ export default function InventarioPage({
               </p>
             )}
             {!loading && filteredInventory.map((item) => {
-              const isExpired = item.days_until_expiration < 0;
+              const isExpired = item.days_until_expiration !== null && item.days_until_expiration < 0;
               const locationStyle =
                 item.zone === 'Refrigeración'
                   ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -299,7 +307,9 @@ export default function InventarioPage({
                         {item.trade_name} {item.concentration}
                       </h2>
                       <p className={`break-words text-sm text-slate-600 ${isExpired ? 'line-through decoration-red-600' : ''}`}>
-                        {item.active_ingredient}
+                        {item.item_type === 'medication'
+                          ? item.active_ingredient
+                          : item.item_type === 'supply' ? 'Insumo médico' : 'Equipo médico'}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
@@ -312,12 +322,12 @@ export default function InventarioPage({
                   <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                     <div>
                       <dt className="text-xs text-slate-500">Lote</dt>
-                      <dd className={`break-all font-mono text-slate-800 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number}</dd>
+                      <dd className={`break-all font-mono text-slate-800 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.batch_number ?? '—'}</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Vencimiento</dt>
                       <dd className={`font-semibold ${expirationTextStyle}`}>
-                        {item.expiration_date}
+                        {item.expiration_date ?? 'No aplica'}
                       </dd>
                     </div>
                     <div>
@@ -325,7 +335,7 @@ export default function InventarioPage({
                       <dd>
                         <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_refrigeration ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                           <Snowflake aria-hidden="true" className="h-3.5 w-3.5" />
-                          {item.requires_refrigeration ? 'Sí' : 'No'}
+                          {item.item_type === 'medication' ? item.requires_refrigeration ? 'Sí' : 'No' : 'No aplica'}
                         </span>
                       </dd>
                     </div>
@@ -334,13 +344,13 @@ export default function InventarioPage({
                       <dd>
                         <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${item.requires_prescription ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
                           <FileText aria-hidden="true" className="h-3.5 w-3.5" />
-                          {item.requires_prescription ? 'Sí' : 'No'}
+                          {item.item_type === 'medication' ? item.requires_prescription ? 'Sí' : 'No' : 'No aplica'}
                         </span>
                       </dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Stock disponible</dt>
-                      <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} unidades</dd>
+                      <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? 'unidades'}</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Estado</dt>
@@ -349,7 +359,7 @@ export default function InventarioPage({
                       </dd>
                     </div>
                   </dl>
-                  {canEditBatches && (
+                  {canEditBatches && item.item_type === 'medication' && (
                     <button
                       type="button"
                       onClick={() => startEditingBatch(item)}

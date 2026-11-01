@@ -23,6 +23,8 @@ export type MovementType =
   | 'inventory_adjustment'
   | 'expired_discard';
 
+export type InventoryItemType = 'supply' | 'equipment';
+
 export interface Location {
   id: string;
   zone: string;
@@ -69,13 +71,36 @@ export interface Batch {
 
 export interface Movement {
   id: string;
-  batch_id: string;
+  batch_id: string | null;
+  item_batch_id?: string | null;
   type: MovementType;
   quantity: number;
   destination_or_beneficiary: string | null;
   prescription_delivered: boolean | null;
   registered_by: string | null;
   motive_or_observation: string | null;
+  created_at: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  item_type: InventoryItemType;
+  unit: string;
+  created_at: string;
+}
+
+export interface InventoryItemBatch {
+  id: string;
+  item_id: string;
+  donor_id: string | null;
+  location_id: string;
+  batch_number: string | null;
+  expiration_date: string | null;
+  initial_quantity: number;
+  current_quantity: number;
+  status: 'available' | 'expired' | 'out_of_stock' | 'quarantine';
+  observations: string | null;
   created_at: string;
 }
 

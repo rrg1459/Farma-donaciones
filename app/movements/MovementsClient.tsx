@@ -28,7 +28,7 @@ export default function MovementPage() {
               Historial de Movimientos
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Registro de entradas por donación y entregas de medicamentos.
+              Registro de entradas y entregas de medicamentos, insumos y equipos.
             </p>
           </div>
 
@@ -85,7 +85,7 @@ export default function MovementPage() {
                   <tr>
                     <th scope="col" className="px-5 py-3">Fecha</th>
                     <th scope="col" className="px-5 py-3">Movimiento</th>
-                    <th scope="col" className="px-5 py-3">Medicamento / Lote</th>
+                    <th scope="col" className="px-5 py-3">Artículo / Lote</th>
                     <th scope="col" className="px-5 py-3">Cantidad</th>
                     <th scope="col" className="px-5 py-3">Donante / Destino</th>
                     <th scope="col" className="px-5 py-3">Responsable</th>
@@ -151,11 +151,14 @@ export default function MovementPage() {
                         </td>
                         <td className="px-5 py-4">
                           <div className="font-semibold text-slate-900">
-                            {movement.medication.trade_name}{' '}
-                            {movement.medication.concentration}
+                            {movement.medication
+                              ? `${movement.medication.trade_name} ${movement.medication.concentration}`
+                              : movement.item
+                                ? `${movement.item.name} · ${movement.item.item_type === 'supply' ? 'Insumo médico' : 'Equipo médico'}`
+                                : 'Artículo no disponible'}
                           </div>
                           <div className="font-mono text-xs text-slate-500">
-                            Lote: {movement.batch_number}
+                            {movement.batch_number ? `Lote: ${movement.batch_number}` : 'Sin lote'}
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
@@ -239,11 +242,14 @@ export default function MovementPage() {
 
                     <div className="border-t border-slate-100 pt-3">
                       <h3 className="font-semibold text-slate-900">
-                        {movement.medication.trade_name}{' '}
-                        {movement.medication.concentration}
+                        {movement.medication
+                          ? `${movement.medication.trade_name} ${movement.medication.concentration}`
+                          : movement.item
+                            ? `${movement.item.name} · ${movement.item.item_type === 'supply' ? 'Insumo médico' : 'Equipo médico'}`
+                            : 'Artículo no disponible'}
                       </h3>
                       <p className="font-mono text-xs text-slate-500">
-                        Lote: {movement.batch_number}
+                        {movement.batch_number ? `Lote: ${movement.batch_number}` : 'Sin lote'}
                       </p>
                     </div>
 

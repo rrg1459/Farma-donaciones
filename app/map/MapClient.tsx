@@ -47,7 +47,9 @@ function buildWarehouseZones(locations: WarehouseLocation[]): WarehouseZone[] {
     const medications = zoneLocations.flatMap((location) =>
       location.batches.map((batch) => ({
         id: batch.id,
-        name: `${batch.medication.trade_name} ${batch.medication.concentration} · Lote ${batch.batch_number} · ${location.location_code}`,
+        name: batch.medication
+          ? `${batch.medication.trade_name} ${batch.medication.concentration} · Lote ${batch.batch_number} · ${location.location_code}`
+          : `${batch.item_name} (${batch.item_unit})${batch.batch_number ? ` · Lote ${batch.batch_number}` : ''} · ${location.location_code}`,
         quantity: batch.current_quantity,
       })),
     );
@@ -130,8 +132,7 @@ export default function MapPage() {
               Distribución del Almacén Central
             </h2>
             <p className="text-xs text-slate-500">
-              Haz clic en una zona para explorar las medicinas guardadas en ese espacio
-              físico.
+              Haz clic en una zona para explorar medicamentos, insumos y equipos guardados.
             </p>
           </div>
 

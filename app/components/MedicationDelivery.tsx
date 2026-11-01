@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { CheckCircle2, LoaderCircle, X } from 'lucide-react';
 import {
   INVENTORY_UPDATED_EVENT,
-  loadDeliveryMedicationOptions,
+  loadDeliveryInventoryOptions,
 } from '../../lib/inventoryData';
 import { useSupabaseData } from '../../lib/useSupabaseData';
 import { getSupabaseClient } from '../../lib/supabaseClient';
@@ -19,11 +19,11 @@ export function MedicationDelivery({
   initialBatchId,
 }: MedicationDeliveryProps) {
   const {
-    data: medications,
+    data: inventoryOptions,
     error: loadError,
     loading,
-  } = useSupabaseData(loadDeliveryMedicationOptions);
-  const [medicationId, setMedicationId] = useState('');
+  } = useSupabaseData(loadDeliveryInventoryOptions);
+  const [itemId, setItemId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [destination, setDestination] = useState('');
   const [prescriptionDelivered, setPrescriptionDelivered] = useState<boolean | null>(null);
@@ -32,30 +32,32 @@ export function MedicationDelivery({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const initialMedicationId = initialBatchId
-    ? medications?.find((medication) =>
-        medication.batch_ids.includes(initialBatchId),
+  const initialItemId = initialBatchId
+    ? inventoryOptions?.find((item) =>
+        item.batch_ids.includes(initialBatchId),
       )?.id
     : undefined;
-  const selectedMedicationId =
-    medicationId ||
-    (initialBatchId ? initialMedicationId ?? '' : medications?.[0]?.id ?? '');
-  const selectedMedication = medications?.find(
-    (medication) => medication.id === selectedMedicationId,
+  const selectedItemId =
+    itemId ||
+    (initialBatchId ? initialItemId ?? '' : inventoryOptions?.[0]?.id ?? '');
+  const selectedItem = inventoryOptions?.find(
+    (item) => item.id === selectedItemId,
   );
   const requestedQuantity = Number(quantity);
   const canSubmit =
-    Boolean(selectedMedication) &&
+    Boolean(selectedItem) &&
     Number.isInteger(requestedQuantity) &&
     requestedQuantity > 0 &&
-    requestedQuantity <= (selectedMedication?.available_quantity ?? 0) &&
+    requestedQuantity <= (selectedItem?.available_quantity ?? 0) &&
     destination.trim().length > 0 &&
-    (!selectedMedication?.requires_prescription || prescriptionDelivered !== null) &&
+    (selectedItem?.item_type !== 'medication' ||
+      !selectedItem.requires_prescription ||
+      prescriptionDelivered !== null) &&
     !submitting;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedMedication || !canSubmit) {
+    if (!selectedItem || !canSubmit) {
       return;
     }
 
@@ -64,31 +66,35 @@ export function MedicationDelivery({
     setSuccessMessage(null);
 
     try {
-      const { data, error } = await getSupabaseClient().rpc(
-        'deliver_medication_fefo',
-        {
-          p_medication_id: selectedMedication.id,
+      const { data, error } = selectedItem.item_type === 'medication'
+        ? await getSupabaseClient().rpc('deliver_medication_fefo', {
+          p_medication_id: selectedItem.id,
           p_quantity: requestedQuantity,
           p_destination_or_beneficiary: destination.trim(),
           p_motive_or_observation: motive.trim() || null,
-          p_prescription_delivered: selectedMedication.requires_prescription
+          p_prescription_delivered: selectedItem.requires_prescription
             ? prescriptionDelivered
             : null,
-        },
-      );
+        })
+        : await getSupabaseClient().rpc('deliver_inventory_item', {
+          p_item_id: selectedItem.id,
+          p_quantity: requestedQuantity,
+          p_destination_or_beneficiary: destination.trim(),
+          p_motive_or_observation: motive.trim() || null,
+        });
 
       if (error) {
         throw new Error(error.message);
       }
       if (!data || data.length === 0) {
-        throw new Error('Supabase no confirmó la salida del medicamento.');
+        throw new Error('Supabase no confirmó la salida del artículo.');
       }
 
       const lotsSummary = data
         .map((item) => `${item.quantity} del lote ${item.batch_number}`)
         .join(', ');
       setSuccessMessage(
-        `Entrega registrada: ${requestedQuantity} unidades de ${selectedMedication.label} para ${destination.trim()}. Lotes FEFO: ${lotsSummary}.`,
+        `Entrega registrada: ${requestedQuantity} ${selectedItem.item_type === 'medication' ? 'unidades' : selectedItem.label.match(/\(([^)]+)\)$/)?.[1] ?? 'unidades'} de ${selectedItem.label} para ${destination.trim()}${selectedItem.item_type === 'medication' ? `. Lotes FEFO: ${lotsSummary}.` : ` de ${selectedItem.batch_count} registro(s) de stock.`}`,
       );
       window.dispatchEvent(new Event(INVENTORY_UPDATED_EVENT));
     } catch (error: unknown) {
@@ -120,10 +126,10 @@ export function MedicationDelivery({
         <div className="flex items-start justify-between border-b border-slate-100 p-5">
           <div>
             <h2 id="delivery-title" className="text-lg font-bold text-slate-900">
-              Entregar medicamento
+              Entregar artículo
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              La salida se asignará a los lotes disponibles por orden FEFO.
+              Los medicamentos salen por FEFO; los insumos y equipos descuentan el stock registrado.
             </p>
           </div>
           <button
@@ -143,9 +149,9 @@ export function MedicationDelivery({
               {loadError}
             </p>
           )}
-          {initialBatchId && !loading && !loadError && !initialMedicationId && (
+          {initialBatchId && !loading && !loadError && !initialItemId && (
             <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              El lote seleccionado no está disponible para entrega. Elige un medicamento
+              El lote seleccionado no está disponible para entrega. Elige un artículo
               con stock vigente.
             </p>
           )}
@@ -162,33 +168,35 @@ export function MedicationDelivery({
           )}
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-semibold text-slate-700">Medicamento</span>
+            <span className="text-sm font-semibold text-slate-700">Artículo a entregar</span>
             <select
               required
-              value={selectedMedicationId}
+              value={selectedItemId}
               onChange={(event) => {
-                setMedicationId(event.target.value);
+                setItemId(event.target.value);
                 setPrescriptionDelivered(null);
                 setSuccessMessage(null);
               }}
-              disabled={loading || !medications?.length || submitting}
+              disabled={loading || !inventoryOptions?.length || submitting}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
             >
               <option value="">
-                {loading ? 'Cargando medicamentos...' : 'Selecciona un medicamento'}
+                {loading ? 'Cargando artículos...' : 'Selecciona un artículo'}
               </option>
-              {medications?.map((medication) => (
-                <option key={medication.id} value={medication.id}>
-                  {medication.label} · {medication.available_quantity} unidades
-                  disponibles
+              {inventoryOptions?.map((item) => (
+                <option key={`${item.item_type}-${item.id}`} value={item.id}>
+                  {item.item_type === 'medication' ? 'Medicamento' : item.item_type === 'supply' ? 'Insumo' : 'Equipo'} · {item.label} · {item.available_quantity} disponibles
                 </option>
               ))}
             </select>
-            {selectedMedication && (
+            {selectedItem && (
               <span className="block text-xs text-slate-500">
-                Principio activo: {selectedMedication.active_ingredient}.{' '}
-                {selectedMedication.batch_count} lote(s) disponibles; el sistema
-                seleccionará primero el de vencimiento más cercano.
+                {selectedItem.item_type === 'medication'
+                  ? `Principio activo: ${selectedItem.active_ingredient}. `
+                  : ''}
+                {selectedItem.batch_count} registro(s) de stock;{selectedItem.item_type === 'medication'
+                  ? ' se seleccionará primero el lote con vencimiento más cercano.'
+                  : ' se descontará el stock disponible.'}
               </span>
             )}
           </label>
@@ -198,7 +206,7 @@ export function MedicationDelivery({
             <input
               required
               min={1}
-              max={selectedMedication?.available_quantity ?? 0}
+              max={selectedItem?.available_quantity ?? 0}
               step={1}
               type="number"
               value={quantity}
@@ -206,7 +214,7 @@ export function MedicationDelivery({
                 setQuantity(event.target.value);
                 setSuccessMessage(null);
               }}
-              disabled={!selectedMedication || submitting}
+              disabled={!selectedItem || submitting}
               className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
             />
           </label>
@@ -229,7 +237,7 @@ export function MedicationDelivery({
             />
           </label>
 
-          {selectedMedication?.requires_prescription && (
+          {selectedItem?.item_type === 'medication' && selectedItem.requires_prescription && (
             <fieldset className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
               <legend className="px-1 text-sm font-semibold text-rose-900">
                 ¿Entregó la receta?
