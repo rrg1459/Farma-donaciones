@@ -10,6 +10,7 @@ import { useAdminSection } from "./AdminDashboardShell";
 
 interface DashboardClientProps {
   initialUsers: User[];
+  userIdsWithBatches: string[];
   initialMedications: Medication[];
   medicationIdsWithBatches: string[];
   locationIdsWithBatches: string[];
@@ -19,6 +20,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({
   initialUsers,
+  userIdsWithBatches,
   initialMedications,
   medicationIdsWithBatches,
   locationIdsWithBatches,
@@ -30,7 +32,12 @@ export default function DashboardClient({
   return (
     <div className="mx-auto max-w-6xl p-3 sm:p-6">
       <main className="mt-3 sm:mt-4">
-        {section === "users" && <UserManagement initialUsers={initialUsers} />}
+        {section === "users" && (
+          <UserManagement
+            initialUsers={initialUsers}
+            userIdsWithBatches={userIdsWithBatches}
+          />
+        )}
         {section === "medications" && (
           <MedicationManagement
             initialMedications={initialMedications}

@@ -48,12 +48,17 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
     authUsers = authUsers.filter((authUser) => !excludedIds.has(authUser.id));
   }
 
-  const [medicationsResponse, locationsResponse, donorsResponse, batchesResponse] =
+  const [medicationsResponse, locationsResponse, donorsResponse, batchesResponse, movementsResponse] =
     await Promise.all([
       supabaseAdmin.from("medications").select("*").order("trade_name"),
       supabaseAdmin.from("locations").select("*").order("location_code"),
       supabaseAdmin.from("donors").select("*").order("name_or_company"),
       supabaseAdmin.from("batches").select("medication_id, location_id").range(0, 499),
+      supabaseAdmin
+        .from("movements")
+        .select("registered_by")
+        .not("registered_by", "is", null)
+        .range(0, 499),
     ]);
 
   if (medicationsResponse.error) {
@@ -68,9 +73,13 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
   if (batchesResponse.error) {
     throw new Error(`No se pudieron consultar los lotes: ${batchesResponse.error.message}`);
   }
+  if (movementsResponse.error) {
+    throw new Error(`No se pudieron consultar los movimientos: ${movementsResponse.error.message}`);
+  }
 
   const medicationIdsWithBatches = new Set<string>();
   const locationIdsWithBatches = new Set<string>();
+  const userIdsWithBatches = new Set<string>();
   let batches = batchesResponse.data ?? [];
   let batchOffset = 0;
   while (batches.length > 0) {
@@ -92,9 +101,33 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
     batches = nextBatches;
   }
 
+  let movements = movementsResponse.data ?? [];
+  let movementOffset = 0;
+  while (movements.length > 0) {
+    for (const movement of movements) {
+      if (movement.registered_by) {
+        userIdsWithBatches.add(movement.registered_by);
+      }
+    }
+
+    movementOffset += movements.length;
+    const { data: nextMovements, error: movementsError } = await supabaseAdmin
+      .from("movements")
+      .select("registered_by")
+      .not("registered_by", "is", null)
+      .range(movementOffset, movementOffset + 499);
+
+    if (movementsError) {
+      throw new Error(`No se pudieron consultar los movimientos: ${movementsError.message}`);
+    }
+
+    movements = nextMovements;
+  }
+
   return (
     <DashboardClient
       initialUsers={authUsers}
+      userIdsWithBatches={[...userIdsWithBatches]}
       initialMedications={medicationsResponse.data ?? []}
       medicationIdsWithBatches={[...medicationIdsWithBatches]}
       locationIdsWithBatches={[...locationIdsWithBatches]}

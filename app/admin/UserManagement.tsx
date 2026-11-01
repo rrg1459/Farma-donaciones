@@ -13,7 +13,14 @@ interface AuthUser {
   }
 }
 
-export default function UserManagement({ initialUsers = [] }: { initialUsers?: AuthUser[] }) {
+export default function UserManagement({
+  initialUsers = [],
+  userIdsWithBatches,
+}: {
+  initialUsers?: AuthUser[]
+  userIdsWithBatches: string[]
+}) {
+  const userIdsWithBatchesSet = new Set(userIdsWithBatches)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -209,6 +216,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
               initialUsers.map((user) => {
                 const isEditing = editingUserId === user.id
                 const isRecentlyUpdated = successUserId === user.id
+                const hasBatches = userIdsWithBatchesSet.has(user.id)
                 const fullName = user.user_metadata?.full_name || "Sin Nombre"
                 const userMetadaRole = user.user_metadata?.role || "user"
 
@@ -324,7 +332,9 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                             </button>
                             <button
                               onClick={() => handleDelete(user.id, fullName || user.email)}
-                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-md hover:bg-red-100 transition-colors cursor-pointer font-medium"
+                              disabled={hasBatches}
+                              title={hasBatches ? 'No se puede eliminar porque tiene movimientos asociados a lotes.' : undefined}
+                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-md hover:bg-red-100 transition-colors cursor-pointer font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Eliminar
                             </button>
