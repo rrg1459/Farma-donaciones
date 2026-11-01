@@ -12,6 +12,7 @@ interface DashboardClientProps {
   initialUsers: User[];
   initialMedications: Medication[];
   medicationIdsWithBatches: string[];
+  locationIdsWithBatches: string[];
   initialLocations: Location[];
   initialDonors: Donor[];
 }
@@ -20,6 +21,7 @@ export default function DashboardClient({
   initialUsers,
   initialMedications,
   medicationIdsWithBatches,
+  locationIdsWithBatches,
   initialLocations,
   initialDonors,
 }: DashboardClientProps) {
@@ -36,7 +38,10 @@ export default function DashboardClient({
           />
         )}
         {section === "locations" && (
-          <LocationManagement initialLocations={initialLocations} />
+          <LocationManagement
+            initialLocations={initialLocations}
+            locationIdsWithBatches={locationIdsWithBatches}
+          />
         )}
         {section === "donors" && <DonorManagement initialDonors={initialDonors} />}
       </main>

@@ -22,10 +22,13 @@ const inputClass =
 
 export default function LocationManagement({
   initialLocations,
+  locationIdsWithBatches,
 }: {
   initialLocations: Location[]
+  locationIdsWithBatches: string[]
 }) {
   const router = useRouter()
+  const locationIdsWithBatchesSet = new Set(locationIdsWithBatches)
   const [form, setForm] = useState<LocationInput>(emptyLocation)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingForm, setEditingForm] = useState<LocationInput>(emptyLocation)
@@ -135,6 +138,7 @@ export default function LocationManagement({
             <p className="text-sm italic text-zinc-500">No hay ubicaciones registradas.</p>
           ) : initialLocations.map((location) => {
             const isEditing = editingId === location.id
+            const hasBatches = locationIdsWithBatchesSet.has(location.id)
             const editValue = editingForm
             return (
               <article
@@ -181,7 +185,7 @@ export default function LocationManagement({
                     </div>
                     <div className="flex flex-col gap-1.5 sm:flex-row">
                       <button type="button" onClick={() => { setEditingForm({ zone: location.zone, shelf_unit: location.shelf_unit, tier_bin: location.tier_bin, location_code: location.location_code, description: location.description ?? '' }); setEditingId(location.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100">Editar</button>
-                      <button type="button" onClick={() => void remove(location)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
+                      <button type="button" onClick={() => void remove(location)} disabled={busy || hasBatches} title={hasBatches ? 'No se puede eliminar porque tiene lotes asociados.' : undefined} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
                     </div>
                   </div>
                 )}

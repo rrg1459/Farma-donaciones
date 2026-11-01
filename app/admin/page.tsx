@@ -53,7 +53,7 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
       supabaseAdmin.from("medications").select("*").order("trade_name"),
       supabaseAdmin.from("locations").select("*").order("location_code"),
       supabaseAdmin.from("donors").select("*").order("name_or_company"),
-      supabaseAdmin.from("batches").select("medication_id").range(0, 499),
+      supabaseAdmin.from("batches").select("medication_id, location_id").range(0, 499),
     ]);
 
   if (medicationsResponse.error) {
@@ -70,17 +70,19 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
   }
 
   const medicationIdsWithBatches = new Set<string>();
+  const locationIdsWithBatches = new Set<string>();
   let batches = batchesResponse.data ?? [];
   let batchOffset = 0;
   while (batches.length > 0) {
     for (const batch of batches) {
       medicationIdsWithBatches.add(batch.medication_id);
+      locationIdsWithBatches.add(batch.location_id);
     }
 
     batchOffset += batches.length;
     const { data: nextBatches, error: batchesError } = await supabaseAdmin
       .from("batches")
-      .select("medication_id")
+      .select("medication_id, location_id")
       .range(batchOffset, batchOffset + 499);
 
     if (batchesError) {
@@ -95,6 +97,7 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
       initialUsers={authUsers}
       initialMedications={medicationsResponse.data ?? []}
       medicationIdsWithBatches={[...medicationIdsWithBatches]}
+      locationIdsWithBatches={[...locationIdsWithBatches]}
       initialLocations={locationsResponse.data ?? []}
       initialDonors={donorsResponse.data ?? []}
     />
