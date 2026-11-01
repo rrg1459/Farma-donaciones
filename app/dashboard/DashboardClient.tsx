@@ -78,6 +78,7 @@ export default function DashboardPage() {
 
               return (
               <article
+                onClick={() => setDeliveryBatchId(item.batch_id)}
                 key={item.batch_id}
                 className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
               >
@@ -134,13 +135,13 @@ export default function DashboardPage() {
                   </div>
                 </dl>
 
-                <button
+                {/* <button
                   onClick={() => setDeliveryBatchId(item.batch_id)}
                   disabled={item.days_until_expiration < 0}
                   className="w-full rounded-lg bg-dispense px-3 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Dispensar
-                </button>
+                </button> */}
               </article>
               );
             })}
