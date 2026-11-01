@@ -155,7 +155,7 @@ export const HeaderClient = ({ userName, userRole }: HeaderClientProps) => {
             )}
 
             <form action={logout} className="flex items-center">
-              <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="my-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-gray-700 dark:text-zinc-200 dark:hover:bg-zinc-600">
+              <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="my-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-gray-700">
                 <FaSignOutAlt size={26} />
               </button>
             </form>

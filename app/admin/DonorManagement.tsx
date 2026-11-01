@@ -24,7 +24,7 @@ const emptyDonor: DonorInput = {
 }
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 bg-transparent p-2 focus:outline-blue-500 text-zinc-900 dark:text-zinc-100'
+  'w-full rounded-md border border-zinc-300 bg-transparent p-2 focus:outline-blue-500 text-zinc-900'
 
 export default function DonorManagement({
   initialDonors,
@@ -73,8 +73,8 @@ export default function DonorManagement({
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-12">
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-5">
-        <h2 className="mb-4 text-md font-bold text-zinc-800 dark:text-zinc-200 sm:text-xl">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-5">
+        <h2 className="mb-4 text-md font-bold text-zinc-800 sm:text-xl">
           Crear donante
         </h2>
         <button
@@ -82,11 +82,11 @@ export default function DonorManagement({
           aria-expanded={showCreateForm}
           aria-controls="create-donor-form"
           onClick={() => setShowCreateForm((visible) => !visible)}
-          className="w-full cursor-pointer rounded-md border border-zinc-300 bg-blue-50 px-3 py-1.5 text-left text-sm font-medium text-zinc-700 dark:border-zinc-600 dark:bg-blue-900/20 dark:text-zinc-300 sm:hidden"
+          className="w-full cursor-pointer rounded-md border border-zinc-300 bg-blue-50 px-3 py-1.5 text-left text-sm font-medium text-zinc-700 sm:hidden"
         >
           {showCreateForm ? 'Ocultar' : 'Mostrar'} Crear Nuevo Donante
         </button>
-        <h3 className="hidden text-base font-semibold text-zinc-700 dark:text-zinc-300 sm:block">
+        <h3 className="hidden text-base font-semibold text-zinc-700 sm:block">
           Crear Nuevo Donante
         </h3>
         <div
@@ -125,12 +125,12 @@ export default function DonorManagement({
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-7">
-        <h2 className="mb-4 text-md font-bold text-zinc-800 dark:text-zinc-200 sm:text-xl">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-7">
+        <h2 className="mb-4 text-md font-bold text-zinc-800 sm:text-xl">
           Donantes registrados ({initialDonors.length})
         </h2>
         {message && (
-          <p role="status" className="mb-4 rounded bg-blue-100 p-2 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          <p role="status" className="mb-4 rounded bg-blue-100 p-2 text-sm text-blue-700">
             {message}
           </p>
         )}
@@ -143,33 +143,33 @@ export default function DonorManagement({
               <article
                 key={donor.id}
                 className={`flex flex-col gap-3 rounded-lg border p-4 transition-colors duration-300 ${isEditing
-                    ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/10'
-                    : 'border-zinc-100 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-700/50'
+                    ? 'border-blue-200 bg-blue-50/50'
+                    : 'border-zinc-100 bg-zinc-50'
                   }`}
               >
                 {isEditing ? (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Editando Donante</p>
+                    <p className="text-xs font-bold text-blue-600">Editando Donante</p>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Nombre o empresa</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nombre o empresa" value={editingForm.name_or_company} onChange={(event) => setEditingForm({ ...editingForm, name_or_company: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Nombre o empresa" value={editingForm.name_or_company} onChange={(event) => setEditingForm({ ...editingForm, name_or_company: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Tipo de donante</label>
-                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Tipo de donante" value={editingForm.donor_type} onChange={(event) => setEditingForm({ ...editingForm, donor_type: event.target.value })} disabled={busy}>
+                      <select className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Tipo de donante" value={editingForm.donor_type} onChange={(event) => setEditingForm({ ...editingForm, donor_type: event.target.value })} disabled={busy}>
                         {donorTypes.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Teléfono</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Teléfono" type="tel" value={editingForm.contact_phone ?? ''} onChange={(event) => setEditingForm({ ...editingForm, contact_phone: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Teléfono" type="tel" value={editingForm.contact_phone ?? ''} onChange={(event) => setEditingForm({ ...editingForm, contact_phone: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Correo electrónico</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Correo electrónico" type="email" value={editingForm.contact_email ?? ''} onChange={(event) => setEditingForm({ ...editingForm, contact_email: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Correo electrónico" type="email" value={editingForm.contact_email ?? ''} onChange={(event) => setEditingForm({ ...editingForm, contact_email: event.target.value })} disabled={busy} />
                     </div>
-                    <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2 dark:border-zinc-700/60">
-                      <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200">Cancelar</button>
+                    <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2">
+                      <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50">Cancelar</button>
                       <button type="button" onClick={() => void save(donor.id, editingForm)} disabled={busy} className="flex cursor-pointer items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{busy ? 'Guardando...' : 'Guardar Cambios'}</button>
                     </div>
                   </div>
@@ -177,18 +177,18 @@ export default function DonorManagement({
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{donor.name_or_company}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-300">
+                      <p className="text-xs text-zinc-500">
                         {donorTypes.find((option) => option.value === donor.donor_type)?.label ?? donor.donor_type}
                       </p>
                       {(donor.contact_phone || donor.contact_email) && (
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-300">
+                        <p className="mt-1 text-xs text-zinc-500">
                           {[donor.contact_phone, donor.contact_email].filter(Boolean).join(' · ')}
                         </p>
                       )}
                     </div>
                     <div className="flex flex-col gap-1.5 sm:flex-row">
-                      <button type="button" onClick={() => { setEditingForm({ name_or_company: donor.name_or_company, contact_phone: donor.contact_phone ?? '', contact_email: donor.contact_email ?? '', donor_type: donor.donor_type }); setEditingId(donor.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-500 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">Editar</button>
-                      <button type="button" onClick={() => void remove(donor)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40">Eliminar</button>
+                      <button type="button" onClick={() => { setEditingForm({ name_or_company: donor.name_or_company, contact_phone: donor.contact_phone ?? '', contact_email: donor.contact_email ?? '', donor_type: donor.donor_type }); setEditingId(donor.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100">Editar</button>
+                      <button type="button" onClick={() => void remove(donor)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
                     </div>
                   </div>
                 )}

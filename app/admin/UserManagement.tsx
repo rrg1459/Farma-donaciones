@@ -130,23 +130,23 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
       <main className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-12">
 
         {/* COLUMNA 1: FORMULARIO DE CREACIÓN */}
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-5">
-          <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800 dark:text-zinc-200">
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-5">
+          <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800">
             Panel de Gestión de Usuarios
           </h2>
 
-          {message && <p className="p-2 mb-4 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded text-sm">{message}</p>}
+          {message && <p className="p-2 mb-4 bg-blue-100 text-blue-700 rounded text-sm">{message}</p>}
 
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <button
               type="button"
               onClick={() => setShowCreateForm(prev => !prev)}
-              className="sm:hidden w-full text-left font-medium text-sm text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20"
+              className="sm:hidden w-full text-left font-medium text-sm text-zinc-700 border border-zinc-300 rounded-md px-3 py-1.5 bg-blue-50"
             >
               {showCreateForm ? 'Ocultar' : 'Mostrar'} Crear Nuevo Usuario
             </button>
 
-            <h3 className="hidden sm:block font-semibold text-base text-zinc-700 dark:text-zinc-300">
+            <h3 className="hidden sm:block font-semibold text-base text-zinc-700">
               Crear Nuevo Usuario
             </h3>
 
@@ -159,7 +159,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                   value={name}
                   onChange={e => setName(e.target.value)}
                   required
-                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900 dark:text-zinc-100"
+                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900"
                 />
               </div>
 
@@ -172,7 +172,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                   onChange={e => setEmail(e.target.value)}
                   required
                   autoComplete="off"
-                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900 dark:text-zinc-100"
+                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900"
                 />
               </div>
 
@@ -185,7 +185,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                   onChange={e => setPassword(e.target.value)}
                   required
                   autoComplete="new-password"
-                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900 dark:text-zinc-100"
+                  className="w-full p-2 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900"
                 />
               </div>
 
@@ -197,8 +197,8 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
         </section>
 
         {/* COLUMNA 2: LISTADO CON EDICIÓN INTEGRADA */}
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-7">
-          <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800 dark:text-zinc-200">
+        <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-7">
+          <h2 className="text-md sm:text-xl font-bold mb-4 text-zinc-800">
             Usuarios Registrados ({initialUsers.length})
           </h2>
 
@@ -216,21 +216,21 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                   <div
                     key={user.id}
                     className={`p-4 rounded-lg border flex flex-col gap-3 transition-colors duration-300 ${isEditing
-                      ? 'bg-blue-50/50 border-blue-200 dark:bg-blue-950/10 dark:border-blue-900/50'
+                      ? 'bg-blue-50/50 border-blue-200'
                       : isRecentlyUpdated
-                        ? 'bg-green-50/50 border-green-200 dark:bg-green-950/10 dark:border-green-900/40'
-                        : 'bg-zinc-50 border-zinc-100 dark:bg-zinc-700/50 dark:border-zinc-600'
+                        ? 'bg-green-50/50 border-green-200'
+                        : 'bg-zinc-50 border-zinc-100'
                       }`}
                   >
                     {isEditing ? (
                       /* --- VISTA MODO EDICIÓN --- */
                       <div className="flex flex-col gap-2">
-                        <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                        <p className="text-xs font-bold text-blue-600">
                           Editando Usuario
                         </p>
 
                         {editError && (
-                          <p className="p-2 text-xs bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 rounded border border-red-200 dark:border-red-900/50">
+                          <p className="p-2 text-xs bg-red-100 text-red-700 rounded border border-red-200">
                             {editError}
                           </p>
                         )}
@@ -242,7 +242,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                             value={editName}
                             onChange={e => setEditName(e.target.value)}
                             disabled={isUpdating}
-                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 disabled:opacity-50"
+                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white text-zinc-900 disabled:opacity-50"
                           />
                         </div>
 
@@ -253,7 +253,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                             value={editEmail}
                             onChange={e => setEditEmail(e.target.value)}
                             disabled={isUpdating}
-                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 disabled:opacity-50"
+                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white text-zinc-900 disabled:opacity-50"
                           />
                         </div>
 
@@ -265,15 +265,15 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                             value={editPassword}
                             onChange={e => setEditPassword(e.target.value)}
                             disabled={isUpdating}
-                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 disabled:opacity-50"
+                            className="w-full p-1.5 text-sm rounded border border-zinc-300 bg-white text-zinc-900 disabled:opacity-50"
                           />
                         </div>
 
-                        <div className="flex justify-end gap-2 mt-2 border-t border-zinc-200/60 dark:border-zinc-700/60 pt-2">
+                        <div className="flex justify-end gap-2 mt-2 border-t border-zinc-200/60 pt-2">
                           <button
                             onClick={() => setEditingUserId(null)}
                             disabled={isUpdating}
-                            className="text-xs bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-300 dark:bg-zinc-600 dark:text-zinc-200 disabled:opacity-50 cursor-pointer"
+                            className="text-xs bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-300 disabled:opacity-50 cursor-pointer"
                           >
                             Cancelar
                           </button>
@@ -291,7 +291,7 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                       <>
                         {/* 🔽 TEXTO SITUADO JUSTO ARRIBA DEL NOMBRE */}
                         {isRecentlyUpdated && (
-                          <p className="text-[11px] font-bold text-green-600 dark:text-green-400 mb-1 transition-all animate-fade-in">
+                          <p className="text-[11px] font-bold text-green-600 mb-1 transition-all animate-fade-in">
                             Usuario actualizado con éxito
                           </p>
                         )}
@@ -299,13 +299,13 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                           <div className="min-w-0 flex-1">
 
                             <p className="font-semibold text-sm truncate">{fullName}</p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">📧 {user.email}</p>
-                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate mt-0.5">ID: {user.id}</p>
+                            <p className="text-xs text-zinc-500 truncate">📧 {user.email}</p>
+                            <p className="text-[10px] text-zinc-400 truncate mt-0.5">ID: {user.id}</p>
 
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-medium ${userMetadaRole === 'superadmin'
-                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
-                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-blue-100 text-blue-800'
                                 }`}>
                                 {userMetadaRole === 'superadmin' && 'Superadmin 👑'}
                                 {userMetadaRole === 'admin' && 'Admin 🛡️'}
@@ -318,13 +318,13 @@ export default function UserManagement({ initialUsers = [] }: { initialUsers?: A
                           <div className="flex flex-col sm:flex-row gap-1.5">
                             <button
                               onClick={() => startEditing(user)}
-                              className="text-xs bg-white text-zinc-700 border border-zinc-300 px-2.5 py-1.5 rounded-md hover:bg-zinc-100 dark:bg-zinc-600 dark:text-zinc-200 dark:border-zinc-500 dark:hover:bg-zinc-500 transition-colors cursor-pointer font-medium"
+                              className="text-xs bg-white text-zinc-700 border border-zinc-300 px-2.5 py-1.5 rounded-md hover:bg-zinc-100 transition-colors cursor-pointer font-medium"
                             >
                               Editar
                             </button>
                             <button
                               onClick={() => handleDelete(user.id, fullName || user.email)}
-                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-md hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40 transition-colors cursor-pointer font-medium"
+                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2.5 py-1.5 rounded-md hover:bg-red-100 transition-colors cursor-pointer font-medium"
                             >
                               Eliminar
                             </button>

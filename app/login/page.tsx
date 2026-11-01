@@ -8,8 +8,8 @@ export default function LoginPage() {
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(login, null);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 p-6">
-      <div className="w-full max-w-md bg-white dark:bg-zinc-800 p-8 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-700">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-6">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border border-zinc-200">
 
         <div className="text-center mb-6">
           <FarmaLogo size={240} priority className="mx-auto mb-4" />
@@ -26,7 +26,7 @@ export default function LoginPage() {
               // MANTIENE EL CORREO: si hay error, reasigna lo que el usuario escribió
               defaultValue={state?.email || ""}
               placeholder="nombre@correo.com"
-              className="w-full p-2.5 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900 dark:text-zinc-100"
+              className="w-full p-2.5 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900"
             />
           </div>
 
@@ -38,7 +38,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               placeholder="••••••••"
-              className="w-full p-2.5 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900 dark:text-zinc-100"
+              className="w-full p-2.5 rounded-md border border-zinc-300 bg-transparent focus:outline-blue-500 text-zinc-900"
             />
           </div>
 
@@ -53,7 +53,7 @@ export default function LoginPage() {
           {/* CONTENEDOR CON ALTURA FIJA PARA EVITAR EL SALTO VISUAL */}
           <div className="min-h-[20px] flex items-center justify-center text-center mt-1">
             {state?.error && (
-              <span className="text-sm text-red-600 dark:text-red-400 font-medium">
+              <span className="text-sm text-red-600 font-medium">
                 {state.error}
               </span>
             )}

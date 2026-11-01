@@ -105,10 +105,10 @@ export default function AdminDashboardShell({
 
   return (
     <AdminSectionContext.Provider value={section}>
-      <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+      <div className="min-h-screen bg-zinc-50 text-zinc-900">
         <nav
           aria-label="Secciones de administración"
-          className="border-b border-slate-200 bg-white px-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 sm:px-6 lg:px-8"
+          className="border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6 lg:px-8"
         >
           <div className="mx-auto flex max-w-7xl gap-5 overflow-x-auto sm:gap-8">
             {navItems.map((item) => {
@@ -123,7 +123,7 @@ export default function AdminDashboardShell({
                   className={`flex min-h-12 items-center space-x-2 whitespace-nowrap border-b-2 py-3 text-xs font-medium transition hover:text-slate-700 sm:py-4 sm:text-sm ${
                     isActive
                       ? "border-emerald-500 text-emerald-600"
-                      : "border-transparent text-slate-500 dark:text-zinc-400"
+                      : "border-transparent text-slate-500"
                   }`}
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />

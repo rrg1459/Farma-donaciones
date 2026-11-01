@@ -80,7 +80,7 @@ function AdminDashboardLoading() {
     <div className="mx-auto max-w-6xl p-3 sm:p-6">
       <div className="flex flex-col items-center justify-center gap-3 py-12">
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        <p className="text-center text-sm italic text-zinc-500 dark:text-zinc-400">
+        <p className="text-center text-sm italic text-zinc-500">
           Procesando...
         </p>
       </div>

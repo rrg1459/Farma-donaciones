@@ -18,7 +18,7 @@ const emptyLocation: LocationInput = {
 }
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 bg-transparent p-2 focus:outline-blue-500 text-zinc-900 dark:text-zinc-100'
+  'w-full rounded-md border border-zinc-300 bg-transparent p-2 focus:outline-blue-500 text-zinc-900'
 
 export default function LocationManagement({
   initialLocations,
@@ -67,8 +67,8 @@ export default function LocationManagement({
 
   return (
     <main className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-12">
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-5">
-        <h2 className="mb-4 text-md font-bold text-zinc-800 dark:text-zinc-200 sm:text-xl">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-5">
+        <h2 className="mb-4 text-md font-bold text-zinc-800 sm:text-xl">
           Crear ubicación
         </h2>
         <button
@@ -76,11 +76,11 @@ export default function LocationManagement({
           aria-expanded={showCreateForm}
           aria-controls="create-location-form"
           onClick={() => setShowCreateForm((visible) => !visible)}
-          className="w-full cursor-pointer rounded-md border border-zinc-300 bg-blue-50 px-3 py-1.5 text-left text-sm font-medium text-zinc-700 dark:border-zinc-600 dark:bg-blue-900/20 dark:text-zinc-300 sm:hidden"
+          className="w-full cursor-pointer rounded-md border border-zinc-300 bg-blue-50 px-3 py-1.5 text-left text-sm font-medium text-zinc-700 sm:hidden"
         >
           {showCreateForm ? 'Ocultar' : 'Mostrar'} Crear Nueva Ubicación
         </button>
-        <h3 className="hidden text-base font-semibold text-zinc-700 dark:text-zinc-300 sm:block">
+        <h3 className="hidden text-base font-semibold text-zinc-700 sm:block">
           Crear Nueva Ubicación
         </h3>
         <div
@@ -121,12 +121,12 @@ export default function LocationManagement({
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 sm:p-6 lg:col-span-7">
-        <h2 className="mb-4 text-md font-bold text-zinc-800 dark:text-zinc-200 sm:text-xl">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-900 shadow-xs sm:p-6 lg:col-span-7">
+        <h2 className="mb-4 text-md font-bold text-zinc-800 sm:text-xl">
           Ubicaciones registradas ({initialLocations.length})
         </h2>
         {message && (
-          <p role="status" className="mb-4 rounded bg-blue-100 p-2 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+          <p role="status" className="mb-4 rounded bg-blue-100 p-2 text-sm text-blue-700">
             {message}
           </p>
         )}
@@ -140,35 +140,35 @@ export default function LocationManagement({
               <article
                 key={location.id}
                 className={`flex flex-col gap-3 rounded-lg border p-4 transition-colors duration-300 ${isEditing
-                    ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/10'
-                    : 'border-zinc-100 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-700/50'
+                    ? 'border-blue-200 bg-blue-50/50'
+                    : 'border-zinc-100 bg-zinc-50'
                   }`}
               >
                 {isEditing ? (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Editando Ubicación</p>
+                    <p className="text-xs font-bold text-blue-600">Editando Ubicación</p>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Zona</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Zona" value={editValue.zone} onChange={(event) => setEditingForm({ ...editValue, zone: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Zona" value={editValue.zone} onChange={(event) => setEditingForm({ ...editValue, zone: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Estante o mueble</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Estante o mueble" value={editValue.shelf_unit} onChange={(event) => setEditingForm({ ...editValue, shelf_unit: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Estante o mueble" value={editValue.shelf_unit} onChange={(event) => setEditingForm({ ...editValue, shelf_unit: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Nivel o casillero</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Nivel o casillero" value={editValue.tier_bin} onChange={(event) => setEditingForm({ ...editValue, tier_bin: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Nivel o casillero" value={editValue.tier_bin} onChange={(event) => setEditingForm({ ...editValue, tier_bin: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Código de ubicación</label>
-                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Código de ubicación" value={editValue.location_code} onChange={(event) => setEditingForm({ ...editValue, location_code: event.target.value })} disabled={busy} />
+                      <input className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Código de ubicación" value={editValue.location_code} onChange={(event) => setEditingForm({ ...editValue, location_code: event.target.value })} disabled={busy} />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-500">Descripción</label>
-                      <textarea className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 disabled:opacity-50" aria-label="Descripción" rows={2} value={editValue.description ?? ''} onChange={(event) => setEditingForm({ ...editValue, description: event.target.value })} disabled={busy} />
+                      <textarea className="w-full rounded border border-zinc-300 bg-white p-1.5 text-sm text-zinc-900 disabled:opacity-50" aria-label="Descripción" rows={2} value={editValue.description ?? ''} onChange={(event) => setEditingForm({ ...editValue, description: event.target.value })} disabled={busy} />
                     </div>
-                    <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2 dark:border-zinc-700/60">
-                      <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200">Cancelar</button>
+                    <div className="mt-2 flex justify-end gap-2 border-t border-zinc-200/60 pt-2">
+                      <button type="button" onClick={() => setEditingId(null)} disabled={busy} className="cursor-pointer rounded-md bg-zinc-200 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300 disabled:opacity-50">Cancelar</button>
                       <button type="button" onClick={() => void save(location.id, editingForm)} disabled={busy} className="flex cursor-pointer items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{busy ? 'Guardando...' : 'Guardar Cambios'}</button>
                     </div>
                   </div>
@@ -176,12 +176,12 @@ export default function LocationManagement({
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold">{location.location_code}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-300">{location.zone} · {location.shelf_unit} · {location.tier_bin}</p>
-                      {location.description && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-300">{location.description}</p>}
+                      <p className="text-xs text-zinc-500">{location.zone} · {location.shelf_unit} · {location.tier_bin}</p>
+                      {location.description && <p className="mt-1 text-xs text-zinc-500">{location.description}</p>}
                     </div>
                     <div className="flex flex-col gap-1.5 sm:flex-row">
-                      <button type="button" onClick={() => { setEditingForm({ zone: location.zone, shelf_unit: location.shelf_unit, tier_bin: location.tier_bin, location_code: location.location_code, description: location.description ?? '' }); setEditingId(location.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-500 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">Editar</button>
-                      <button type="button" onClick={() => void remove(location)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40">Eliminar</button>
+                      <button type="button" onClick={() => { setEditingForm({ zone: location.zone, shelf_unit: location.shelf_unit, tier_bin: location.tier_bin, location_code: location.location_code, description: location.description ?? '' }); setEditingId(location.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100">Editar</button>
+                      <button type="button" onClick={() => void remove(location)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
                     </div>
                   </div>
                 )}
