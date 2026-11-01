@@ -257,7 +257,8 @@ export function MedicationDelivery({
                     disabled={submitting}
                     className="h-4 w-4 accent-rose-600"
                   />
-                  Sí, entregó receta
+                  <span className="sm:hidden">Sí la entregó</span>
+                  <span className="hidden sm:inline">Sí, entregó la receta</span>
                 </label>
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                   <input
@@ -273,7 +274,8 @@ export function MedicationDelivery({
                     disabled={submitting}
                     className="h-4 w-4 accent-rose-600"
                   />
-                  No entregó receta
+                  <span className="sm:hidden">No la entregó</span>
+                  <span className="hidden sm:inline">No entregó la receta</span>
                 </label>
               </div>
             </fieldset>
