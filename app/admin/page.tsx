@@ -48,11 +48,12 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
     authUsers = authUsers.filter((authUser) => !excludedIds.has(authUser.id));
   }
 
-  const [medicationsResponse, locationsResponse, donorsResponse] =
+  const [medicationsResponse, locationsResponse, donorsResponse, batchesResponse] =
     await Promise.all([
       supabaseAdmin.from("medications").select("*").order("trade_name"),
       supabaseAdmin.from("locations").select("*").order("location_code"),
       supabaseAdmin.from("donors").select("*").order("name_or_company"),
+      supabaseAdmin.from("batches").select("medication_id").range(0, 499),
     ]);
 
   if (medicationsResponse.error) {
@@ -64,11 +65,36 @@ async function AdminDashboardData({ userRole }: { userRole: string }) {
   if (donorsResponse.error) {
     throw new Error(`No se pudieron consultar los donantes: ${donorsResponse.error.message}`);
   }
+  if (batchesResponse.error) {
+    throw new Error(`No se pudieron consultar los lotes: ${batchesResponse.error.message}`);
+  }
+
+  const medicationIdsWithBatches = new Set<string>();
+  let batches = batchesResponse.data ?? [];
+  let batchOffset = 0;
+  while (batches.length > 0) {
+    for (const batch of batches) {
+      medicationIdsWithBatches.add(batch.medication_id);
+    }
+
+    batchOffset += batches.length;
+    const { data: nextBatches, error: batchesError } = await supabaseAdmin
+      .from("batches")
+      .select("medication_id")
+      .range(batchOffset, batchOffset + 499);
+
+    if (batchesError) {
+      throw new Error(`No se pudieron consultar los lotes: ${batchesError.message}`);
+    }
+
+    batches = nextBatches;
+  }
 
   return (
     <DashboardClient
       initialUsers={authUsers}
       initialMedications={medicationsResponse.data ?? []}
+      medicationIdsWithBatches={[...medicationIdsWithBatches]}
       initialLocations={locationsResponse.data ?? []}
       initialDonors={donorsResponse.data ?? []}
     />

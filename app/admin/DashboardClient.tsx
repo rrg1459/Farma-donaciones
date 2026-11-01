@@ -11,6 +11,7 @@ import { useAdminSection } from "./AdminDashboardShell";
 interface DashboardClientProps {
   initialUsers: User[];
   initialMedications: Medication[];
+  medicationIdsWithBatches: string[];
   initialLocations: Location[];
   initialDonors: Donor[];
 }
@@ -18,6 +19,7 @@ interface DashboardClientProps {
 export default function DashboardClient({
   initialUsers,
   initialMedications,
+  medicationIdsWithBatches,
   initialLocations,
   initialDonors,
 }: DashboardClientProps) {
@@ -28,7 +30,10 @@ export default function DashboardClient({
       <main className="mt-3 sm:mt-4">
         {section === "users" && <UserManagement initialUsers={initialUsers} />}
         {section === "medications" && (
-          <MedicationManagement initialMedications={initialMedications} />
+          <MedicationManagement
+            initialMedications={initialMedications}
+            medicationIdsWithBatches={medicationIdsWithBatches}
+          />
         )}
         {section === "locations" && (
           <LocationManagement initialLocations={initialLocations} />

@@ -34,10 +34,13 @@ const inputClass =
 
 export default function MedicationManagement({
   initialMedications,
+  medicationIdsWithBatches,
 }: {
   initialMedications: Medication[]
+  medicationIdsWithBatches: string[]
 }) {
   const router = useRouter()
+  const medicationIdsWithBatchesSet = new Set(medicationIdsWithBatches)
   const [form, setForm] = useState<MedicationInput>(emptyMedication)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingForm, setEditingForm] = useState<MedicationInput>(emptyMedication)
@@ -213,6 +216,7 @@ export default function MedicationManagement({
             <p className="text-sm italic text-zinc-500">No hay medicamentos registrados.</p>
           ) : initialMedications.map((medication) => {
             const isEditing = editingId === medication.id
+            const hasBatches = medicationIdsWithBatchesSet.has(medication.id)
             const selectedForm = isEditing
               ? editingForm
               : {
@@ -273,7 +277,7 @@ export default function MedicationManagement({
                     </div>
                     <div className="flex flex-col gap-1.5 sm:flex-row">
                       <button type="button" onClick={() => { setEditingForm(selectedForm); setEditingId(medication.id) }} className="cursor-pointer rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100">Editar</button>
-                      <button type="button" onClick={() => void remove(medication)} disabled={busy} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
+                      <button type="button" onClick={() => void remove(medication)} disabled={busy || hasBatches} title={hasBatches ? 'No se puede eliminar porque tiene lotes asociados.' : undefined} className="cursor-pointer rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50">Eliminar</button>
                     </div>
                   </div>
                 )}
