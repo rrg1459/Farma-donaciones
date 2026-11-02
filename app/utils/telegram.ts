@@ -5,10 +5,10 @@ export async function sendTelegramMessage(text: string): Promise<void> {
   const chatId = process.env.TELEGRAM_CHANNEL_USER;
 
   if (!botToken || !chatId) {
-    return;
+    throw new Error("Falta configurar TELEGRAM_BOT_TOKEN o TELEGRAM_CHANNEL_USER.");
   }
 
-  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+  const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -17,4 +17,9 @@ export async function sendTelegramMessage(text: string): Promise<void> {
       parse_mode: "HTML",
     }),
   });
+
+  const result: { ok?: boolean; description?: string } = await response.json();
+  if (!response.ok || result.ok !== true) {
+    throw new Error(result.description ?? `Telegram respondió con estado ${response.status}.`);
+  }
 }
