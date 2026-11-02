@@ -8,6 +8,7 @@ import {
 } from '../../lib/inventoryData';
 import { useSupabaseData } from '../../lib/useSupabaseData';
 import { getSupabaseClient } from '../../lib/supabaseClient';
+import { notifyInventoryActivity } from '../actions/actions';
 
 interface MedicationDeliveryProps {
   onClose: () => void;
@@ -90,13 +91,20 @@ export function MedicationDelivery({
         throw new Error('Supabase no confirmó la salida del artículo.');
       }
 
-      const lotsSummary = data
-        .map((item) => `${item.quantity} del lote ${item.batch_number}`)
-        .join(', ');
+      // const lotsSummary = data
+      //   .map((item) => `${item.quantity} del lote ${item.batch_number}`)
+      //   .join(', ');
+      const details = `${requestedQuantity} ${selectedItem.item_type === 'medication' ? 'unidades' : selectedItem.label.match(/\(([^)]+)\)$/)?.[1] ?? 'unidades'} de ${selectedItem.label} para ${destination.trim()}`;
+      const message = `Entrega registrada: ${details}`;
       setSuccessMessage(
-        `Entrega registrada: ${requestedQuantity} ${selectedItem.item_type === 'medication' ? 'unidades' : selectedItem.label.match(/\(([^)]+)\)$/)?.[1] ?? 'unidades'} de ${selectedItem.label} para ${destination.trim()}${selectedItem.item_type === 'medication' ? `. Lotes FEFO: ${lotsSummary}.` : ` de ${selectedItem.batch_count} registro(s) de stock.`}`,
+        message,
       );
       window.dispatchEvent(new Event(INVENTORY_UPDATED_EVENT));
+      try {
+        await notifyInventoryActivity('delivery', details);
+      } catch (telegramError) {
+        console.error('Error enviando alerta a Telegram:', telegramError);
+      }
     } catch (error: unknown) {
       setSubmitError(
         error instanceof Error

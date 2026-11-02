@@ -17,6 +17,7 @@ import {
 } from '../../lib/batchValidation';
 import { useSupabaseData } from '../../lib/useSupabaseData';
 import { getSupabaseClient } from '../../lib/supabaseClient';
+import { notifyInventoryActivity } from '../actions/actions';
 
 interface NewDonationProps {
   onClose: () => void;
@@ -233,10 +234,17 @@ export function NewDonation({ onClose }: NewDonationProps) {
         donatedBatch = batchNumber.trim() || null;
       }
 
+      const details = `${donationQuantity} ${entryType === 'medication' ? 'unidades' : creatingItem ? itemUnit.trim() : selectedItem?.unit} de ${donatedItemName}${donatedBatch ? `, lote ${donatedBatch}` : ''}.`;
+      const message = `Donación registrada: ${details}`;
       setSuccessMessage(
-        `Donación registrada: ${donationQuantity} ${entryType === 'medication' ? 'unidades' : creatingItem ? itemUnit.trim() : selectedItem?.unit} de ${donatedItemName}${donatedBatch ? `, lote ${donatedBatch}` : ''}.`,
+        message,
       );
       window.dispatchEvent(new Event(INVENTORY_UPDATED_EVENT));
+      try {
+        await notifyInventoryActivity('donation', details);
+      } catch (telegramError) {
+        console.error('Error enviando alerta a Telegram:', telegramError);
+      }
     } catch (error: unknown) {
       setSubmitError(
         error instanceof Error
