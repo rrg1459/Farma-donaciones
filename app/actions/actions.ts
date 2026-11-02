@@ -193,6 +193,34 @@ export async function login(prevState: ActionState, formData: FormData): Promise
     };
   }
 
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHANNEL_USER_LOGIN;
+    const loginDate = new Intl.DateTimeFormat("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date());
+
+    if (botToken && chatId) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `🚀 ¡Nuevo inicio de sesión!\n📧 Usuario: ${email}\n🕒 Fecha: ${loginDate}`,
+          parse_mode: 'HTML', // Opcional: permite negritas (<b>), cursivas (<i>), etc.
+        }),
+      });
+    }
+  } catch (telegramError) {
+    // No interrumpimos el login del usuario si Telegram falla
+    console.error('Error enviando alerta a Telegram:', telegramError);
+  }
+
   // 3. Si las credenciales están BIEN, forzamos la redirección al panel principal
   // ¡OJO! 'redirect' debe ejecutarse fuera del bloque try/catch si usas uno, 
   // ya que Next.js lanza una excepción interna para manejar los redireccionamientos.
