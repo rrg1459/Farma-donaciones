@@ -6,6 +6,27 @@ import { createClient } from "../utils/supabase";
 import { sendTelegramMessage } from "../utils/telegram";
 import { createClient as createSupabaseAdminClient } from "@supabase/supabase-js";
 
+export async function notifyInventoryActivity(
+  activity: "donation" | "delivery",
+  details: string,
+): Promise<void> {
+  if (activity !== "donation" && activity !== "delivery") {
+    throw new Error("Tipo de actividad de inventario no válido.");
+  }
+  if (!details.trim() || details.length > 3500) {
+    throw new Error("Los detalles de la notificación no son válidos.");
+  }
+
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    throw new Error("Se requiere una sesión activa para enviar la notificación.");
+  }
+
+  const activityLabel = activity === "donation" ? "Donación" : "Entrega";
+  await sendTelegramMessage(`📦 Nueva <b>${activityLabel}</b> registrada: ${details}`);
+}
+
 export async function registerPerson(formData: FormData) {
   const supabase = await createClient();
 
