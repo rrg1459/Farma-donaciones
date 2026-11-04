@@ -7,6 +7,7 @@ import type {
   Location,
   Medication,
   Movement,
+  PackagingUnit,
 } from './inventory';
 
 type TableDefinition<Row> = {
@@ -83,6 +84,7 @@ export interface Database {
           p_location_description: string | null;
           p_batch_number: string;
           p_expiration_date: string;
+          p_packaging_unit: PackagingUnit;
           p_quantity: number;
           p_observations: string | null;
         };
