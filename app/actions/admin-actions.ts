@@ -13,7 +13,6 @@ import type {
 } from '../../types/inventory'
 import {
   getDateAfterDays,
-  getMinimumInitialQuantity,
   isValidExpirationDate,
   MIN_EXPIRATION_DAYS,
 } from '../../lib/batchValidation'
@@ -42,7 +41,7 @@ export type DonorInput = Pick<
 >
 export type BatchEditInput = {
   expiration_date: string
-  initial_quantity: number
+  current_quantity: number
 }
 
 const pharmaceuticalForms: PharmaceuticalForm[] = [
@@ -169,13 +168,13 @@ export async function adminUpdateBatch(
         `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
       )
     }
-    if (!Number.isSafeInteger(input.initial_quantity) || input.initial_quantity < 1) {
-      throw new Error('La cantidad inicial debe ser un entero mayor que cero.')
+    if (!Number.isSafeInteger(input.current_quantity) || input.current_quantity < 0) {
+      throw new Error('La cantidad actual debe ser un entero mayor o igual que cero.')
     }
 
     const { data: batch, error: batchError } = await supabaseAdmin
       .from('batches')
-      .select('initial_quantity, current_quantity, expiration_date, status')
+      .select('current_quantity, expiration_date, status')
       .eq('id', id)
       .single()
 
@@ -183,20 +182,10 @@ export async function adminUpdateBatch(
       throw new Error(getCatalogDatabaseError(batchError))
     }
 
-    const minimumQuantity = getMinimumInitialQuantity(
-      batch.initial_quantity,
-      batch.current_quantity,
-    )
-    if (input.initial_quantity < minimumQuantity) {
-      throw new Error(
-        `La cantidad inicial no puede ser menor que ${minimumQuantity} (cantidad inicial registrada o stock actual).`,
-      )
-    }
-
     const status: BatchStatus =
       batch.status === 'quarantine'
         ? 'quarantine'
-        : batch.current_quantity === 0
+        : input.current_quantity === 0
           ? 'out_of_stock'
           : input.expiration_date <= getDateAfterDays(60)
             ? 'expiring_soon'
@@ -205,11 +194,10 @@ export async function adminUpdateBatch(
       .from('batches')
       .update({
         expiration_date: input.expiration_date,
-        initial_quantity: input.initial_quantity,
+        current_quantity: input.current_quantity,
         status,
       })
       .eq('id', id)
-      .eq('initial_quantity', batch.initial_quantity)
       .eq('current_quantity', batch.current_quantity)
       .eq('expiration_date', batch.expiration_date)
 

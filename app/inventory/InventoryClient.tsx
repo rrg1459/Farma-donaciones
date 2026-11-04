@@ -9,7 +9,6 @@ import {
 import type { BatchStatus } from '../../types/inventory';
 import {
   getMinimumExpirationDate,
-  getMinimumInitialQuantity,
   isValidExpirationDate,
   MIN_EXPIRATION_DAYS,
 } from '../../lib/batchValidation';
@@ -39,19 +38,13 @@ export default function InventarioPage({
   const [selectedStatus, setSelectedStatus] = useState('');
   const [editingBatch, setEditingBatch] = useState<InventoryRow | null>(null);
   const [editExpirationDate, setEditExpirationDate] = useState('');
-  const [editInitialQuantity, setEditInitialQuantity] = useState('');
+  const [editCurrentQuantity, setEditCurrentQuantity] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [savingBatch, setSavingBatch] = useState(false);
   const [deliveryBatchId, setDeliveryBatchId] = useState<string | null>(null);
   const { data, error, loading } = useSupabaseData(loadInventoryRows);
   const inventory = data?.rows ?? [];
   const minimumExpirationDate = getMinimumExpirationDate();
-  const minimumInitialQuantity = editingBatch
-    ? getMinimumInitialQuantity(
-      editingBatch.initial_quantity,
-      editingBatch.current_quantity,
-    )
-    : 1;
   const filteredInventory = inventory.filter((item) =>
     (item.trade_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.active_ingredient.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,7 +56,7 @@ export default function InventarioPage({
   function startEditingBatch(batch: InventoryRow) {
     setEditingBatch(batch);
     setEditExpirationDate(batch.expiration_date ?? '');
-    setEditInitialQuantity(String(batch.initial_quantity));
+    setEditCurrentQuantity(String(batch.current_quantity));
     setEditError(null);
   }
 
@@ -73,7 +66,7 @@ export default function InventarioPage({
 
     const input: BatchEditInput = {
       expiration_date: editExpirationDate,
-      initial_quantity: Number(editInitialQuantity),
+      current_quantity: Number(editCurrentQuantity),
     };
     if (!isValidExpirationDate(input.expiration_date)) {
       setEditError(
@@ -82,11 +75,11 @@ export default function InventarioPage({
       return;
     }
     if (
-      !Number.isSafeInteger(input.initial_quantity) ||
-      input.initial_quantity < minimumInitialQuantity
+      !Number.isSafeInteger(input.current_quantity) ||
+      input.current_quantity < 0
     ) {
       setEditError(
-        `La cantidad inicial no puede ser menor que ${minimumInitialQuantity} (cantidad inicial registrada o stock actual).`,
+        'La cantidad actual debe ser un entero mayor o igual que cero.',
       );
       return;
     }
@@ -417,20 +410,20 @@ export default function InventarioPage({
               </label>
               <label className="block space-y-1.5">
                 <span className="text-sm font-semibold text-slate-700">
-                  Cantidad inicial
+                  Cantidad actual
                 </span>
                 <input
                   required
                   type="number"
-                  min={minimumInitialQuantity}
+                  min={0}
                   step={1}
-                  value={editInitialQuantity}
-                  onChange={(event) => setEditInitialQuantity(event.target.value)}
+                  value={editCurrentQuantity}
+                  onChange={(event) => setEditCurrentQuantity(event.target.value)}
                   disabled={savingBatch}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
                 />
                 <span className="block text-xs text-slate-500">
-                  Mínimo {minimumInitialQuantity}; no puede ser menor que la cantidad inicial registrada ni que el stock actual ({editingBatch.current_quantity}).
+                  Stock disponible actual: {editingBatch.current_quantity}. La cantidad inicial registrada se conserva como dato histórico.
                 </span>
               </label>
               {editError && (
