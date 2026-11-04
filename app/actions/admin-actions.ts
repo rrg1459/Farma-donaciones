@@ -44,6 +44,12 @@ export type BatchEditInput = {
   current_quantity: number
   location_id: string
 }
+export type InventoryItemBatchEditInput = {
+  batch_number: string
+  expiration_date: string
+  current_quantity: number
+  location_id: string
+}
 
 const pharmaceuticalForms: PharmaceuticalForm[] = [
   'tablet_pill',
@@ -220,6 +226,98 @@ export async function adminUpdateBatch(
       batch.status === null
         ? await update.is('status', null).select('id').maybeSingle()
         : await update.eq('status', batch.status).select('id').maybeSingle()
+
+    if (error) {
+      throw new Error(getCatalogDatabaseError(error))
+    }
+    if (!data) {
+      throw new Error('El lote cambió mientras lo editabas. Recarga el inventario e inténtalo de nuevo.')
+    }
+  })
+}
+
+export async function adminUpdateInventoryItemBatch(
+  id: string,
+  input: InventoryItemBatchEditInput,
+): Promise<CatalogActionResult> {
+  return runCatalogAdminAction(async () => {
+    if (
+      !Number.isSafeInteger(input.current_quantity) ||
+      input.current_quantity < 0
+    ) {
+      throw new Error('La cantidad actual debe ser un entero mayor o igual que cero.')
+    }
+
+    const batchNumber = input.batch_number.trim()
+    const expirationDate = input.expiration_date || null
+    if (batchNumber.length > 100) {
+      throw new Error('El número de lote no puede superar 100 caracteres.')
+    }
+    if (expirationDate && !isValidExpirationDate(expirationDate)) {
+      throw new Error(
+        `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
+      )
+    }
+    if (expirationDate && !batchNumber) {
+      throw new Error('El número de lote es obligatorio si el artículo tiene fecha de caducidad.')
+    }
+
+    const { data: batch, error: batchError } = await supabaseAdmin
+      .from('inventory_item_batches')
+      .select('item_id, batch_number, expiration_date, current_quantity, status, location_id')
+      .eq('id', id)
+      .single()
+
+    if (batchError) {
+      throw new Error(getCatalogDatabaseError(batchError))
+    }
+
+    const { data: item, error: itemError } = await supabaseAdmin
+      .from('inventory_items')
+      .select('item_type')
+      .eq('id', batch.item_id)
+      .single()
+
+    if (itemError) {
+      throw new Error(getCatalogDatabaseError(itemError))
+    }
+    if (item.item_type !== 'supply' && item.item_type !== 'equipment') {
+      throw new Error('El tipo de artículo no se puede editar desde el inventario.')
+    }
+
+    const status =
+      batch.status === 'quarantine'
+        ? 'quarantine'
+        : input.current_quantity === 0
+          ? 'out_of_stock'
+          : expirationDate && expirationDate < new Date().toISOString().slice(0, 10)
+            ? 'expired'
+            : 'available'
+    const update = supabaseAdmin
+      .from('inventory_item_batches')
+      .update({
+        batch_number: batchNumber || null,
+        expiration_date: expirationDate,
+        current_quantity: input.current_quantity,
+        location_id: requireText(input.location_id, 'La ubicación', 100),
+        status,
+      })
+      .eq('id', id)
+      .eq('current_quantity', batch.current_quantity)
+      .eq('location_id', batch.location_id)
+
+    const guardedUpdate = batch.batch_number === null
+      ? update.is('batch_number', null)
+      : update.eq('batch_number', batch.batch_number)
+    const guardedDateUpdate = batch.expiration_date === null
+      ? guardedUpdate.is('expiration_date', null)
+      : guardedUpdate.eq('expiration_date', batch.expiration_date)
+    const guardedStatusUpdate = batch.status === null
+      ? guardedDateUpdate.is('status', null)
+      : guardedDateUpdate.eq('status', batch.status)
+    const { data, error } = await guardedStatusUpdate
+      .select('id')
+      .maybeSingle()
 
     if (error) {
       throw new Error(getCatalogDatabaseError(error))

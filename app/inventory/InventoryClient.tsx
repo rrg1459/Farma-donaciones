@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from 'react';
 import { FileText, Search, Snowflake } from 'lucide-react';
 import {
+  adminUpdateInventoryItemBatch,
   adminUpdateBatch,
   type BatchEditInput,
+  type InventoryItemBatchEditInput,
 } from '../actions/admin-actions';
 import type { BatchStatus } from '../../types/inventory';
 import {
@@ -37,6 +39,7 @@ export default function InventarioPage({
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [editingBatch, setEditingBatch] = useState<InventoryRow | null>(null);
+  const [editBatchNumber, setEditBatchNumber] = useState('');
   const [editExpirationDate, setEditExpirationDate] = useState('');
   const [editCurrentQuantity, setEditCurrentQuantity] = useState('');
   const [editLocationId, setEditLocationId] = useState('');
@@ -56,6 +59,7 @@ export default function InventarioPage({
 
   function startEditingBatch(batch: InventoryRow) {
     setEditingBatch(batch);
+    setEditBatchNumber(batch.batch_number ?? '');
     setEditExpirationDate(batch.expiration_date ?? '');
     setEditCurrentQuantity(String(batch.current_quantity));
     setEditLocationId(batch.location_id);
@@ -66,31 +70,67 @@ export default function InventarioPage({
     event.preventDefault();
     if (!editingBatch) return;
 
-    const input: BatchEditInput = {
-      expiration_date: editExpirationDate,
-      current_quantity: Number(editCurrentQuantity),
-      location_id: editLocationId,
-    };
-    if (!isValidExpirationDate(input.expiration_date)) {
-      setEditError(
-        `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
-      );
-      return;
-    }
-    if (
-      !Number.isSafeInteger(input.current_quantity) ||
-      input.current_quantity < 0
-    ) {
+    const currentQuantity = Number(editCurrentQuantity);
+    if (!Number.isSafeInteger(currentQuantity) || currentQuantity < 0) {
       setEditError(
         'La cantidad actual debe ser un entero mayor o igual que cero.',
       );
       return;
     }
 
+    if (editingBatch.item_type === 'medication') {
+      const input: BatchEditInput = {
+        expiration_date: editExpirationDate,
+        current_quantity: currentQuantity,
+        location_id: editLocationId,
+      };
+      if (!isValidExpirationDate(input.expiration_date)) {
+        setEditError(
+          `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
+        );
+        return;
+      }
+    } else {
+      const input: InventoryItemBatchEditInput = {
+        batch_number: editBatchNumber,
+        expiration_date: editExpirationDate,
+        current_quantity: currentQuantity,
+        location_id: editLocationId,
+      };
+      if (
+        input.expiration_date &&
+        !isValidExpirationDate(input.expiration_date)
+      ) {
+        setEditError(
+          `La fecha de caducidad debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`,
+        );
+        return;
+      }
+      if (input.expiration_date && !input.batch_number.trim()) {
+        setEditError('El número de lote es obligatorio si se registra vencimiento.');
+        return;
+      }
+    }
+
     setSavingBatch(true);
     setEditError(null);
-    const result = await adminUpdateBatch(editingBatch.id, input);
-    setSavingBatch(false);
+    let result: Awaited<ReturnType<typeof adminUpdateBatch>>;
+    try {
+      result = editingBatch.item_type === 'medication'
+        ? await adminUpdateBatch(editingBatch.id, {
+          expiration_date: editExpirationDate,
+          current_quantity: currentQuantity,
+          location_id: editLocationId,
+        })
+        : await adminUpdateInventoryItemBatch(editingBatch.id, {
+          batch_number: editBatchNumber,
+          expiration_date: editExpirationDate,
+          current_quantity: currentQuantity,
+          location_id: editLocationId,
+        });
+    } finally {
+      setSavingBatch(false);
+    }
 
     if (!result.success) {
       setEditError(result.error);
@@ -257,14 +297,14 @@ export default function InventarioPage({
                       </td>
                       {canEditBatches && (
                         <td className="px-2 py-4">
-                          {item.item_type === 'medication' && <button
+                          <button
                             type="button"
                             onClick={() => startEditingBatch(item)}
-                            aria-label={`Editar lote ${item.batch_number ?? ''}`}
+                            aria-label={`Editar ${item.item_type === 'medication' ? 'lote' : 'artículo'} ${item.batch_number ?? ''}`}
                             className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                           >
                             Editar
-                          </button>}
+                          </button>
                         </td>
                       )}
                     </tr>
@@ -361,7 +401,7 @@ export default function InventarioPage({
                       </dd>
                     </div>
                   </dl>
-                  {canEditBatches && item.item_type === 'medication' && (
+                  {canEditBatches && (
                     <button
                       type="button"
                       onClick={(event) => {
@@ -370,7 +410,7 @@ export default function InventarioPage({
                       }}
                       className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                     >
-                      Editar lote
+                      Editar {item.item_type === 'medication' ? 'lote' : 'artículo'}
                     </button>
                   )}
                 </article>
@@ -388,7 +428,12 @@ export default function InventarioPage({
             className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl"
           >
             <h2 id="edit-batch-heading" className="text-lg font-bold text-slate-900">
-              Editar lote {editingBatch.batch_number}
+              {editingBatch.item_type === 'medication'
+                ? 'Editar lote'
+                : editingBatch.item_type === 'supply'
+                  ? 'Editar insumo'
+                  : 'Editar equipo médico'}
+              {editingBatch.batch_number ? ` ${editingBatch.batch_number}` : ''}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
               {editingBatch.trade_name} {editingBatch.concentration}
@@ -399,18 +444,34 @@ export default function InventarioPage({
                   Fecha de caducidad
                 </span>
                 <input
-                  required
                   type="date"
-                  min={minimumExpirationDate}
+                  required={editingBatch.item_type === 'medication'}
+                  min={editingBatch.item_type === 'medication' ? minimumExpirationDate : undefined}
                   value={editExpirationDate}
                   onChange={(event) => setEditExpirationDate(event.target.value)}
                   disabled={savingBatch}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
                 />
                 <span className="block text-xs text-slate-500">
-                  La fecha debe ser al menos {MIN_EXPIRATION_DAYS} días a partir de hoy.
+                  {editingBatch.item_type === 'medication'
+                    ? `La fecha debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy.`
+                    : `Opcional. Si se registra, debe ser al menos ${MIN_EXPIRATION_DAYS} días a partir de hoy y requiere número de lote.`}
                 </span>
               </label>
+              {editingBatch.item_type !== 'medication' && (
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Número de lote
+                  </span>
+                  <input
+                    maxLength={100}
+                    value={editBatchNumber}
+                    onChange={(event) => setEditBatchNumber(event.target.value)}
+                    disabled={savingBatch}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+                  />
+                </label>
+              )}
               <label className="block space-y-1.5">
                 <span className="text-sm font-semibold text-slate-700">
                   Cantidad actual
@@ -426,7 +487,9 @@ export default function InventarioPage({
                   className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
                 />
                 <span className="block text-xs text-slate-500">
-                  Stock disponible actual: {editingBatch.current_quantity}. La cantidad inicial registrada se conserva como dato histórico.
+                  Stock disponible actual: {editingBatch.current_quantity}.
+                  {editingBatch.item_type === 'medication' &&
+                    ' La cantidad inicial registrada se conserva como dato histórico.'}
                 </span>
               </label>
               <label className="block space-y-1.5">
