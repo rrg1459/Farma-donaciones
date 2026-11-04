@@ -251,7 +251,7 @@ export default function InventarioPage({
                         </span>
                       </td>
                       <td className={`break-words px-2 py-4 font-semibold ${expirationTextStyle}`}>{item.expiration_date ?? 'No aplica'}</td>
-                      <td className={`break-words px-2 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? 'unidades'}</td>
+                      <td className={`break-words px-2 py-4 font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? item.packaging_unit ?? 'unidades'}</td>
                       <td className="break-words px-2 py-4">
                         {item.status ? statusLabels[item.status] : 'Sin estado'}
                       </td>
@@ -352,7 +352,7 @@ export default function InventarioPage({
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Stock disponible</dt>
-                      <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? 'unidades'}</dd>
+                      <dd className={`font-bold text-slate-900 ${isExpired ? 'line-through decoration-red-600' : ''}`}>{item.current_quantity} {item.unit ?? item.packaging_unit ?? 'unidades'}</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-slate-500">Estado</dt>
