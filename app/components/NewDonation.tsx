@@ -330,86 +330,6 @@ export function NewDonation({ onClose }: NewDonationProps) {
             </select>
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">Donante</span>
-              <select
-                value={donorChoice}
-                onChange={(event) => setDonorChoice(event.target.value)}
-                disabled={loading || submitting}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
-              >
-                <option value="">
-                  {loading ? 'Cargando donantes...' : 'Selecciona un donante'}
-                </option>
-                {options?.donors.map((donor) => (
-                  <option key={donor.id} value={donor.id}>
-                    {donor.name_or_company}
-                  </option>
-                ))}
-                <option value="new">Registrar nuevo donante</option>
-              </select>
-            </label>
-
-            {creatingDonor && (
-              <>
-                <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Nombre o empresa
-                  </span>
-                  <input
-                    required
-                    maxLength={200}
-                    value={donorName}
-                    onChange={(event) => setDonorName(event.target.value)}
-                    disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </label>
-                <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Tipo de donante
-                  </span>
-                  <select
-                    value={donorType}
-                    onChange={(event) => setDonorType(event.target.value)}
-                    disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {donorTypes.map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Teléfono <span className="font-normal text-slate-400">(opcional)</span>
-                  </span>
-                  <input
-                    type="tel"
-                    maxLength={40}
-                    value={donorPhone}
-                    onChange={(event) => setDonorPhone(event.target.value)}
-                    disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </label>
-                <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Correo <span className="font-normal text-slate-400">(opcional)</span>
-                  </span>
-                  <input
-                    type="email"
-                    maxLength={254}
-                    value={donorEmail}
-                    onChange={(event) => setDonorEmail(event.target.value)}
-                    disabled={submitting}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </label>
-              </>
-            )}
-          </div>
           {entryType !== 'medication' && (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-1.5">
@@ -577,6 +497,87 @@ export function NewDonation({ onClose }: NewDonationProps) {
             )}
           </div>
           )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block space-y-1.5">
+              <span className="text-sm font-semibold text-slate-700">Donante</span>
+              <select
+                value={donorChoice}
+                onChange={(event) => setDonorChoice(event.target.value)}
+                disabled={loading || submitting}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+              >
+                <option value="">
+                  {loading ? 'Cargando donantes...' : 'Selecciona un donante'}
+                </option>
+                {options?.donors.map((donor) => (
+                  <option key={donor.id} value={donor.id}>
+                    {donor.name_or_company}
+                  </option>
+                ))}
+                <option value="new">Registrar nuevo donante</option>
+              </select>
+            </label>
+
+            {creatingDonor && (
+              <>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Nombre o empresa
+                  </span>
+                  <input
+                    required
+                    maxLength={200}
+                    value={donorName}
+                    onChange={(event) => setDonorName(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Tipo de donante
+                  </span>
+                  <select
+                    value={donorType}
+                    onChange={(event) => setDonorType(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {donorTypes.map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Teléfono <span className="font-normal text-slate-400">(opcional)</span>
+                  </span>
+                  <input
+                    type="tel"
+                    maxLength={40}
+                    value={donorPhone}
+                    onChange={(event) => setDonorPhone(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Correo <span className="font-normal text-slate-400">(opcional)</span>
+                  </span>
+                  <input
+                    type="email"
+                    maxLength={254}
+                    value={donorEmail}
+                    onChange={(event) => setDonorEmail(event.target.value)}
+                    disabled={submitting}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </label>
+              </>
+            )}
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
