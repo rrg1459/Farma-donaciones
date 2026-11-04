@@ -39,6 +39,7 @@ export default function InventarioPage({
   const [editingBatch, setEditingBatch] = useState<InventoryRow | null>(null);
   const [editExpirationDate, setEditExpirationDate] = useState('');
   const [editCurrentQuantity, setEditCurrentQuantity] = useState('');
+  const [editLocationId, setEditLocationId] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [savingBatch, setSavingBatch] = useState(false);
   const [deliveryBatchId, setDeliveryBatchId] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export default function InventarioPage({
     setEditingBatch(batch);
     setEditExpirationDate(batch.expiration_date ?? '');
     setEditCurrentQuantity(String(batch.current_quantity));
+    setEditLocationId(batch.location_id);
     setEditError(null);
   }
 
@@ -67,6 +69,7 @@ export default function InventarioPage({
     const input: BatchEditInput = {
       expiration_date: editExpirationDate,
       current_quantity: Number(editCurrentQuantity),
+      location_id: editLocationId,
     };
     if (!isValidExpirationDate(input.expiration_date)) {
       setEditError(
@@ -425,6 +428,25 @@ export default function InventarioPage({
                 <span className="block text-xs text-slate-500">
                   Stock disponible actual: {editingBatch.current_quantity}. La cantidad inicial registrada se conserva como dato histórico.
                 </span>
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-semibold text-slate-700">
+                  Ubicación
+                </span>
+                <select
+                  required
+                  value={editLocationId}
+                  onChange={(event) => setEditLocationId(event.target.value)}
+                  disabled={savingBatch}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+                >
+                  <option value="">Selecciona una ubicación</option>
+                  {data?.locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.location_code} — {location.zone}
+                    </option>
+                  ))}
+                </select>
               </label>
               {editError && (
                 <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

@@ -42,6 +42,7 @@ export type DonorInput = Pick<
 export type BatchEditInput = {
   expiration_date: string
   current_quantity: number
+  location_id: string
 }
 
 const pharmaceuticalForms: PharmaceuticalForm[] = [
@@ -99,6 +100,18 @@ function requireText(value: string, label: string, maxLength = 200): string {
     throw new Error(`${label} no puede superar ${maxLength} caracteres.`)
   }
   return normalized
+}
+
+function getLocationRecord(input: LocationInput) {
+  return {
+    zone: requireText(input.zone, 'La zona'),
+    shelf_unit: requireText(input.shelf_unit, 'El estante'),
+    tier_bin: requireText(input.tier_bin, 'El nivel o casillero'),
+    location_code: requireText(input.location_code, 'El código', 100),
+    description: input.description?.trim()
+      ? requireText(input.description, 'La descripción', 500)
+      : null,
+  }
 }
 
 function getCatalogDatabaseError(error: { code?: string; message: string }) {
@@ -174,7 +187,7 @@ export async function adminUpdateBatch(
 
     const { data: batch, error: batchError } = await supabaseAdmin
       .from('batches')
-      .select('current_quantity, expiration_date, status')
+      .select('current_quantity, expiration_date, status, location_id')
       .eq('id', id)
       .single()
 
@@ -195,11 +208,13 @@ export async function adminUpdateBatch(
       .update({
         expiration_date: input.expiration_date,
         current_quantity: input.current_quantity,
+        location_id: requireText(input.location_id, 'La ubicación', 100),
         status,
       })
       .eq('id', id)
       .eq('current_quantity', batch.current_quantity)
       .eq('expiration_date', batch.expiration_date)
+      .eq('location_id', batch.location_id)
 
     const { data, error } =
       batch.status === null
@@ -220,15 +235,7 @@ export async function adminSaveLocation(
   input: LocationInput,
 ): Promise<CatalogActionResult> {
   return runCatalogAdminAction(async () => {
-    const location = {
-      zone: requireText(input.zone, 'La zona'),
-      shelf_unit: requireText(input.shelf_unit, 'El estante'),
-      tier_bin: requireText(input.tier_bin, 'El nivel o casillero'),
-      location_code: requireText(input.location_code, 'El código', 100),
-      description: input.description?.trim()
-        ? requireText(input.description, 'La descripción', 500)
-        : null,
-    }
+    const location = getLocationRecord(input)
 
     const query = id
       ? supabaseAdmin.from('locations').update(location).eq('id', id)

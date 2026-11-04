@@ -22,6 +22,7 @@ export interface DashboardData {
 export interface InventoryRow {
   id: string;
   batch_id: string;
+  location_id: string;
   item_type: 'medication' | InventoryItemType;
   trade_name: string;
   active_ingredient: string;
@@ -280,6 +281,7 @@ export async function loadInventoryRows(): Promise<{
     return {
       id: batch.id,
       batch_id: batch.id,
+      location_id: batch.location_id,
       item_type: 'medication' as const,
       trade_name: medication.trade_name,
       active_ingredient: medication.active_ingredient,
@@ -322,6 +324,7 @@ export async function loadInventoryRows(): Promise<{
     return {
       id: batch.id,
       batch_id: batch.id,
+      location_id: batch.location_id,
       item_type: item.item_type,
       trade_name: item.name,
       active_ingredient: '',
