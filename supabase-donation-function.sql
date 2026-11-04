@@ -1,4 +1,31 @@
 -- Ejecuta este script despues del esquema inicial para habilitar recepciones atomicas.
+ALTER TABLE public.batches
+  ADD COLUMN IF NOT EXISTS packaging_unit TEXT NOT NULL DEFAULT 'Otro';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'batches_packaging_unit_check'
+      AND conrelid = 'public.batches'::regclass
+  ) THEN
+    ALTER TABLE public.batches
+      ADD CONSTRAINT batches_packaging_unit_check
+      CHECK (packaging_unit IN (
+        'Caja', 'Estuche', 'Frasco', 'Blister', 'Tubo',
+        'Ampolleta', 'Sobre', 'Cartucho', 'Otro'
+      ));
+  END IF;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS public.register_donation(
+  UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
+  public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, TEXT, TEXT, TEXT,
+  TEXT, TEXT, DATE, INTEGER, TEXT
+);
+
 CREATE OR REPLACE FUNCTION public.register_donation(
   p_donor_id UUID,
   p_donor_name TEXT,
@@ -20,6 +47,7 @@ CREATE OR REPLACE FUNCTION public.register_donation(
   p_location_description TEXT,
   p_batch_number TEXT,
   p_expiration_date DATE,
+  p_packaging_unit TEXT,
   p_quantity INTEGER,
   p_observations TEXT DEFAULT NULL
 )
@@ -56,6 +84,13 @@ BEGIN
 
   IF p_expiration_date IS NULL OR p_expiration_date < CURRENT_DATE + 7 THEN
     RAISE EXCEPTION 'La fecha de caducidad debe ser al menos 7 dias a partir de hoy.';
+  END IF;
+
+  IF p_packaging_unit IS NULL OR p_packaging_unit NOT IN (
+    'Caja', 'Estuche', 'Frasco', 'Blister', 'Tubo',
+    'Ampolleta', 'Sobre', 'Cartucho', 'Otro'
+  ) THEN
+    RAISE EXCEPTION 'La unidad de empaque no es válida.';
   END IF;
 
   IF p_location_id IS NULL THEN
@@ -156,6 +191,7 @@ BEGIN
     location_id,
     batch_number,
     expiration_date,
+    packaging_unit,
     initial_quantity,
     current_quantity,
     status,
@@ -167,6 +203,7 @@ BEGIN
     v_location_id,
     BTRIM(p_batch_number),
     p_expiration_date,
+    p_packaging_unit,
     p_quantity,
     p_quantity,
     v_status,
@@ -199,13 +236,13 @@ $$;
 GRANT EXECUTE ON FUNCTION public.register_donation(
   UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
   public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, TEXT, TEXT, TEXT,
-  TEXT, TEXT, DATE, INTEGER, TEXT
+  TEXT, TEXT, DATE, TEXT, INTEGER, TEXT
 ) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.register_donation(
   UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT,
   public.pharmaceutical_form_enum, BOOLEAN, BOOLEAN, UUID, TEXT, TEXT, TEXT, TEXT,
-  TEXT, TEXT, DATE, INTEGER, TEXT
+  TEXT, TEXT, DATE, TEXT, INTEGER, TEXT
 ) FROM PUBLIC, anon;
 
 NOTIFY pgrst, 'reload schema';
