@@ -8,6 +8,7 @@ import type {
   Medication,
   Movement,
   MovementType,
+  PackagingUnit,
 } from '../types/inventory';
 import { getSupabaseClient } from './supabaseClient';
 
@@ -29,6 +30,7 @@ export interface InventoryRow {
   concentration: string;
   batch_number: string | null;
   expiration_date: string | null;
+  packaging_unit: PackagingUnit | null;
   days_until_expiration: number | null;
   current_quantity: number;
   location_code: string;
@@ -225,7 +227,7 @@ export async function loadInventoryRows(): Promise<{
       supabase
         .from('batches')
         .select(
-          'id, medication_id, location_id, batch_number, expiration_date, initial_quantity, current_quantity, status',
+          'id, medication_id, location_id, batch_number, expiration_date, packaging_unit, initial_quantity, current_quantity, status',
         )
         .order('expiration_date', { ascending: true }),
       supabase.from('medications').select('*'),
@@ -288,6 +290,7 @@ export async function loadInventoryRows(): Promise<{
       concentration: medication.concentration,
       batch_number: batch.batch_number,
       expiration_date: batch.expiration_date,
+      packaging_unit: batch.packaging_unit,
       initial_quantity: batch.initial_quantity,
       days_until_expiration: Math.floor(
         (new Date(`${batch.expiration_date}T00:00:00Z`).getTime() -
@@ -331,6 +334,7 @@ export async function loadInventoryRows(): Promise<{
       concentration: item.unit,
       batch_number: batch.batch_number,
       expiration_date: batch.expiration_date,
+      packaging_unit: null,
       initial_quantity: batch.initial_quantity,
       days_until_expiration: daysUntilExpiration,
       current_quantity: batch.current_quantity,
