@@ -25,6 +25,17 @@ export type MovementType =
 
 export type InventoryItemType = 'supply' | 'equipment';
 
+export type PackagingUnit =
+  | 'Caja'
+  | 'Estuche'
+  | 'Frasco'
+  | 'Blister'
+  | 'Tubo'
+  | 'Ampolleta'
+  | 'Sobre'
+  | 'Cartucho'
+  | 'Otro';
+
 export interface Location {
   id: string;
   zone: string;
@@ -62,6 +73,7 @@ export interface Batch {
   location_id: string;
   batch_number: string;
   expiration_date: string;
+  packaging_unit: PackagingUnit;
   initial_quantity: number;
   current_quantity: number;
   status: BatchStatus | null;
