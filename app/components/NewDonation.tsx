@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { CalendarDays, CheckCircle2, LoaderCircle, X } from 'lucide-react';
 import type { PharmaceuticalForm } from '../../types/inventory';
 import type { InventoryItemType } from '../../types/inventory';
+import type { PackagingUnit } from '../../types/inventory';
 import {
   INVENTORY_UPDATED_EVENT,
   loadDonationFormOptions,
@@ -39,6 +40,18 @@ const donorTypes = [
   ['pharmacy', 'Farmacia'],
   ['ngo', 'Organización / ONG'],
   ['laboratory', 'Laboratorio'],
+];
+
+const packagingUnits: PackagingUnit[] = [
+  'Caja',
+  'Estuche',
+  'Frasco',
+  'Blister',
+  'Tubo',
+  'Ampolleta',
+  'Sobre',
+  'Cartucho',
+  'Otro',
 ];
 
 function isPharmaceuticalForm(value: string): value is PharmaceuticalForm {
@@ -77,6 +90,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
   const [batchNumber, setBatchNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [packagingUnit, setPackagingUnit] = useState<PackagingUnit | ''>('');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -107,7 +121,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
       )
       : Boolean(options?.locations.some((location) => location.id === locationId))) &&
     (entryType === 'medication'
-      ? Boolean(batchNumber.trim()) &&
+      ? Boolean(packagingUnit && batchNumber.trim()) &&
         expirationDateISO !== null &&
         isValidExpirationDate(expirationDateISO)
       : (creatingItem
@@ -176,6 +190,9 @@ export function NewDonation({ onClose }: NewDonationProps) {
         if (!expirationDateISO) {
           throw new Error('La fecha de caducidad del medicamento es obligatoria.');
         }
+        if (!packagingUnit) {
+          throw new Error('La unidad de empaque del medicamento es obligatoria.');
+        }
         const { data, error } = await getSupabaseClient().rpc('register_donation', {
           ...donorParams,
         p_medication_id: creatingMedication
@@ -202,6 +219,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
         ...locationParams,
         p_batch_number: batchNumber.trim(),
         p_expiration_date: expirationDateISO,
+        p_packaging_unit: packagingUnit,
       });
 
         if (error) throw new Error(error.message);
@@ -234,7 +252,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
         donatedBatch = batchNumber.trim() || null;
       }
 
-      const details = `${donationQuantity} ${entryType === 'medication' ? 'unidades' : creatingItem ? itemUnit.trim() : selectedItem?.unit} de ${donatedItemName}${donatedBatch ? `, lote ${donatedBatch}` : ''}.`;
+      const details = `${donationQuantity} ${entryType === 'medication' ? packagingUnit.toLowerCase() : creatingItem ? itemUnit.trim() : selectedItem?.unit} de ${donatedItemName}${donatedBatch ? `, lote ${donatedBatch}` : ''}.`;
       const message = `Donación registrada: ${details}`;
       setSuccessMessage(
         message,
@@ -310,7 +328,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
           )}
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-semibold text-slate-700">Tipo de artículo</span>
+            <span className="text-sm font-semibold text-slate-700">
+              Tipo de artículo
+              <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+            </span>
             <select
               value={entryType}
               onChange={(event) => {
@@ -335,6 +356,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
               <label className="block space-y-1.5">
                 <span className="text-sm font-semibold text-slate-700">
                   {entryType === 'supply' ? 'Insumo médico' : 'Equipo médico'}
+                  <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                 </span>
                 <select
                   value={itemChoice}
@@ -358,7 +380,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
               {creatingItem && (
                 <>
                   <label className="block space-y-1.5">
-                    <span className="text-sm font-semibold text-slate-700">Nombre del artículo</span>
+                    <span className="text-sm font-semibold text-slate-700">
+                      Nombre del artículo
+                      <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                    </span>
                     <input
                       required
                       maxLength={200}
@@ -370,7 +395,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
                     />
                   </label>
                   <label className="block space-y-1.5">
-                    <span className="text-sm font-semibold text-slate-700">Unidad de medida</span>
+                    <span className="text-sm font-semibold text-slate-700">
+                      Unidad de medida
+                      <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                    </span>
                     <input
                       required
                       maxLength={40}
@@ -389,7 +417,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
           {entryType === 'medication' && (
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">Medicamento</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Medicamento
+                <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+              </span>
               <select
                 value={medicationChoice}
                 onChange={(event) => setMedicationChoice(event.target.value)}
@@ -413,6 +444,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Nombre comercial
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <input
                     required
@@ -426,6 +458,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Principio activo
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <input
                     required
@@ -439,6 +472,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Concentración
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <input
                     required
@@ -453,6 +487,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Forma farmacéutica
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <select
                     value={pharmaceuticalForm}
@@ -469,38 +504,91 @@ export function NewDonation({ onClose }: NewDonationProps) {
                     ))}
                   </select>
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={requiresRefrigeration}
-                    onChange={(event) =>
-                      setRequiresRefrigeration(event.target.checked)
-                    }
-                    disabled={submitting}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600"
-                  />
-                  Requiere refrigeración
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={requiresPrescription}
-                    onChange={(event) =>
-                      setRequiresPrescription(event.target.checked)
-                    }
-                    disabled={submitting}
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600"
-                  />
-                  Requiere receta médica
-                </label>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={requiresRefrigeration}
+                      onChange={(event) =>
+                        setRequiresRefrigeration(event.target.checked)
+                      }
+                      disabled={submitting}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600"
+                    />
+                    Requiere refrigeración
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={requiresPrescription}
+                      onChange={(event) =>
+                        setRequiresPrescription(event.target.checked)
+                      }
+                      disabled={submitting}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600"
+                    />
+                    Requiere receta médica
+                  </label>
+                </div>
               </>
             )}
           </div>
           )}
 
+          {entryType === 'medication' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <span className="text-sm font-semibold text-slate-700">
+                  Cantidad recibida
+                  <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                </span>
+                <input
+                  required
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  disabled={submitting}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-semibold text-slate-700">
+                  Unidad de empaque
+                  <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                </span>
+                <select
+                  required
+                  value={packagingUnit}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (packagingUnits.includes(value as PackagingUnit)) {
+                      setPackagingUnit(value as PackagingUnit);
+                    } else {
+                      setPackagingUnit('');
+                    }
+                  }}
+                  disabled={submitting}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100"
+                >
+                  <option value="">Selecciona una unidad de empaque</option>
+                  {packagingUnits.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">Donante</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Donante
+                <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+              </span>
               <select
                 value={donorChoice}
                 onChange={(event) => setDonorChoice(event.target.value)}
@@ -524,6 +612,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Nombre o empresa
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <input
                     required
@@ -537,6 +626,7 @@ export function NewDonation({ onClose }: NewDonationProps) {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-semibold text-slate-700">
                     Tipo de donante
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
                   </span>
                   <select
                     value={donorType}
@@ -581,7 +671,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">Ubicación</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Ubicación
+                <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+              </span>
               <select
                 required
                 value={locationId}
@@ -601,7 +694,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
             {creatingLocation && (
               <>
                 <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Zona</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Zona
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                  </span>
                   <input
                     required
                     maxLength={100}
@@ -613,7 +709,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
                   />
                 </label>
                 <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Estante o mueble</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Estante o mueble
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                  </span>
                   <input
                     required
                     maxLength={100}
@@ -625,7 +724,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
                   />
                 </label>
                 <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Nivel o casillero</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Nivel o casillero
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                  </span>
                   <input
                     required
                     maxLength={100}
@@ -637,7 +739,10 @@ export function NewDonation({ onClose }: NewDonationProps) {
                   />
                 </label>
                 <label className="block space-y-1.5">
-                  <span className="text-sm font-semibold text-slate-700">Código de ubicación</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Código de ubicación
+                    <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                  </span>
                   <input
                     required
                     maxLength={100}
@@ -665,7 +770,12 @@ export function NewDonation({ onClose }: NewDonationProps) {
             {(entryType === 'medication' || entryType === 'supply') && (
             <>
             <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">Número de lote</span>
+              <span className="text-sm font-semibold text-slate-700">
+                Número de lote
+                {entryType === 'medication' && (
+                  <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                )}
+              </span>
               <input
                 required={entryType === 'medication'}
                 maxLength={100}
@@ -678,7 +788,12 @@ export function NewDonation({ onClose }: NewDonationProps) {
             </label>
             <label className="block space-y-1.5">
               <span className="text-sm font-semibold text-slate-700">
-                Fecha de caducidad {entryType === 'supply' && <span className="font-normal text-slate-400">(opcional)</span>}
+                Fecha de caducidad
+                {entryType === 'medication' ? (
+                  <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+                ) : (
+                  <span className="ml-1 font-normal text-slate-400">(opcional)</span>
+                )}
               </span>
               <span className="relative block">
                 <input
@@ -753,26 +868,27 @@ export function NewDonation({ onClose }: NewDonationProps) {
             </label>
             </>
             )}
-            <label className="block space-y-1.5">
-              <span className="text-sm font-semibold text-slate-700">
-                Cantidad recibida
-                {entryType !== 'medication' && (
+            {entryType !== 'medication' && (
+              <label className="block space-y-1.5">
+                <span className="text-sm font-semibold text-slate-700">
+                  Cantidad recibida
+                  <span className="ml-1 text-red-600" aria-hidden="true">*</span>
                   <span className="font-normal text-slate-500">
                     {' '}({creatingItem ? itemUnit || 'unidad' : selectedItem?.unit ?? 'unidad'})
                   </span>
-                )}
-              </span>
-              <input
-                required
-                type="number"
-                min={1}
-                step={1}
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                disabled={submitting}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </label>
+                </span>
+                <input
+                  required
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  disabled={submitting}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </label>
+            )}
           </div>
 
           <label className="block space-y-1.5">
