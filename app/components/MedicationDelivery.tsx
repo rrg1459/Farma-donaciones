@@ -176,7 +176,10 @@ export function MedicationDelivery({
           )}
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-semibold text-slate-700">Artículo a entregar</span>
+            <span className="text-sm font-semibold text-slate-700">
+              Artículo a entregar
+              <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+            </span>
             <select
               required
               value={selectedItemId}
@@ -210,7 +213,10 @@ export function MedicationDelivery({
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-semibold text-slate-700">Cantidad</span>
+            <span className="text-sm font-semibold text-slate-700">
+              Cantidad
+              <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
+            </span>
             <input
               required
               min={1}
@@ -230,6 +236,7 @@ export function MedicationDelivery({
           <label className="block space-y-1.5">
             <span className="text-sm font-semibold text-slate-700">
               Destino o beneficiario
+              <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
             </span>
             <input
               required
@@ -249,6 +256,7 @@ export function MedicationDelivery({
             <fieldset className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-3">
               <legend className="px-1 text-sm font-semibold text-rose-900">
                 ¿Entregó la receta?
+                <span className="ml-1 text-base text-red-600" aria-hidden="true">*</span>
               </legend>
               <div className="flex flex-row gap-5">
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700">
