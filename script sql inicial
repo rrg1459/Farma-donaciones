@@ -66,6 +66,8 @@ CREATE TABLE batches (
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE RESTRICT,    -- ID de la ubicación en el almacén
   batch_number TEXT NOT NULL,           -- Número de lote del fabricante
   expiration_date DATE NOT NULL,        -- Fecha de caducidad
+  packaging_unit TEXT NOT NULL DEFAULT 'Otro'
+    CHECK (packaging_unit IN ('Caja', 'Estuche', 'Frasco', 'Blister', 'Tubo', 'Ampolleta', 'Sobre', 'Cartucho', 'Otro')),
   initial_quantity INT NOT NULL CHECK (initial_quantity > 0), -- Cantidad inicial recibida
   current_quantity INT NOT NULL CHECK (current_quantity >= 0), -- Cantidad actual disponible
   status batch_status_enum DEFAULT 'available', -- Estado actual del lote
